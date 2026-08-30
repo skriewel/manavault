@@ -456,9 +456,10 @@ const CollectionItemTile = memo(function CollectionItemTile({
     group.items.reduce((total, member) => total + member.forTradeQuantity, 0)
   const deckLocation = collectionItemDeckLocation(group.items)
   const finish = commonValue(group.items.map((member) => member.finish))
+  const proxyStatus = commonValue(group.items.map((member) => member.isProxy))
   const hasMixedFinishes = new Set(group.items.map((member) => member.finish)).size > 1
   const location = commonValue(group.items.map((member) => member.location?.name || "Unfiled"))
-  const price = finish ? item.priceText : undefined
+  const price = finish && proxyStatus !== undefined ? (proxyStatus ? "Proxy" : item.priceText) : undefined
   const allocatedLabel = allocatedQuantity
     ? freeQuantity > 0
       ? `In deck x${allocatedQuantity} · Out x${freeQuantity}`
