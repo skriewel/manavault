@@ -14,6 +14,7 @@ defmodule ManavaultWeb.Schema.Catalog.CollectionTypes do
     field :finish, non_null(:string)
     field :for_trade, non_null(:boolean)
     field :for_trade_quantity, non_null(:integer)
+    field :is_proxy, non_null(:boolean)
     field :notes, :string
     field :printing, :printing, resolve: &CollectionFields.collection_item_printing/3
 
@@ -285,6 +286,10 @@ defmodule ManavaultWeb.Schema.Catalog.CollectionTypes do
     field :purchase_price_cents, :integer do
       resolve(&ValueResolvers.map_value/3)
     end
+
+    field :is_proxy, :boolean do
+      resolve(&ValueResolvers.map_value/3)
+    end
   end
 
   object :collection_import_row do
@@ -348,6 +353,7 @@ defmodule ManavaultWeb.Schema.Catalog.CollectionTypes do
     field :purchase_price_cents, :integer
     field :for_trade, :boolean
     field :for_trade_quantity, :integer
+    field :is_proxy, :boolean
   end
 
   input_object :collection_item_update_input do
@@ -361,6 +367,7 @@ defmodule ManavaultWeb.Schema.Catalog.CollectionTypes do
     field :purchase_price_cents, :integer
     field :for_trade, :boolean
     field :for_trade_quantity, :integer
+    field :is_proxy, :boolean
   end
 
   input_object :collection_import_preview_input do
@@ -382,6 +389,7 @@ defmodule ManavaultWeb.Schema.Catalog.CollectionTypes do
     field :scryfall_id, :id
     field :location_id, :id
     field :purchase_price_cents, :integer
+    field :is_proxy, :boolean
   end
 
   input_object :collection_import_row_input do

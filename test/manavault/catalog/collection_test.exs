@@ -146,6 +146,60 @@ defmodule Manavault.Catalog.CollectionTest do
     assert Enum.map(items, & &1.purchase_price_cents) == [4_200, 100]
   end
 
+  test "proxy collection items have zero value and do not affect value summaries" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+
+    assert {:ok, real_item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 1,
+               "purchase_price_cents" => 100
+             })
+
+    assert {:ok, proxy_item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 2,
+               "purchase_price_cents" => 50_000,
+               "is_proxy" => true
+             })
+
+    real_item = Catalog.get_collection_item!(real_item.id)
+    proxy_item = Catalog.get_collection_item!(proxy_item.id)
+
+    assert proxy_item.is_proxy
+    assert Manavault.Catalog.Price.collection_item_price_cents(proxy_item) == 0
+    assert Manavault.Catalog.Price.collection_item_purchase_price_cents(proxy_item) == 0
+    assert Manavault.Catalog.Price.collection_item_value_gain_cents(proxy_item) == 0
+
+    real_price = Manavault.Catalog.Price.collection_item_price_cents(real_item)
+    assert is_integer(real_price)
+
+    assert %{
+             item_count: 3,
+             total_price_cents: ^real_price,
+             purchase_price_cents: 100
+           } = Catalog.collection_value_summary()
+  end
+
+  test "collection CSV export and import preserve proxy status" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+
+    assert {:ok, _proxy_item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 1,
+               "is_proxy" => true
+             })
+
+    csv = Catalog.export_collection_csv()
+    assert csv =~ "Proxy"
+    assert csv =~ "Yes"
+
+    assert {:ok, preview} = Catalog.preview_collection_import(csv, format: :csv)
+    assert [%{attrs: %{"is_proxy" => true}}] = preview.rows
+  end
+
   test "collection item groups combine rows by printing before pagination" do
     assert {:ok, %{cards_count: 2, printings_count: 2}} =
              Catalog.import_cards([@black_lotus, @time_walk])

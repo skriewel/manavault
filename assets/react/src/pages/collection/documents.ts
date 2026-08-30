@@ -313,6 +313,7 @@ export const CreateCollectionItemDocument = graphql(`
         condition
         language
         finish
+        isProxy
         notes
         priceText
         purchasePriceCents
@@ -360,6 +361,7 @@ export const UpdateCollectionItemDocument = graphql(`
         condition
         language
         finish
+        isProxy
         notes
         priceText
         purchasePriceCents
@@ -566,6 +568,7 @@ export const CollectionItemGroupsPageDocument = graphql(`
             condition
             language
             finish
+            isProxy
             notes
             priceText
             purchasePriceCents
@@ -643,6 +646,7 @@ export const PreviewCollectionImportDocument = graphql(`
             scryfallId
             locationId
             purchasePriceCents
+            isProxy
           }
           printing {
             id

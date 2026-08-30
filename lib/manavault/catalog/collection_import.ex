@@ -32,7 +32,8 @@ defmodule Manavault.Catalog.CollectionImport do
       "condition" => normalize_condition(Map.get(row, "condition", "")),
       "language" => normalize_language(Map.get(row, "language", "")),
       "scryfall_id" => Util.normalize_filter(Map.get(row, "scryfall_id", "")),
-      "purchase_price_cents" => Price.parse_cents(Map.get(row, "purchase_price_cents"))
+      "purchase_price_cents" => Price.parse_cents(Map.get(row, "purchase_price_cents")),
+      "is_proxy" => normalize_boolean(Map.get(row, "is_proxy", ""))
     }
   end
 
@@ -241,6 +242,9 @@ defmodule Manavault.Catalog.CollectionImport do
       key when key in ["scryfall", "scryfall_id", "printing_id"] ->
         "scryfall_id"
 
+      key when key in ["proxy", "is_proxy"] ->
+        "is_proxy"
+
       key ->
         key
     end
@@ -272,6 +276,15 @@ defmodule Manavault.Catalog.CollectionImport do
       value when value in ["d", "dm", "damaged"] -> "damaged"
       _other -> "near_mint"
     end
+  end
+
+  defp normalize_boolean(value) when is_boolean(value), do: value
+
+  defp normalize_boolean(value) do
+    value
+    |> Util.normalize_filter()
+    |> String.downcase()
+    |> then(&(&1 in ["1", "true", "yes", "y", "proxy"]))
   end
 
   defp normalize_language(value) do

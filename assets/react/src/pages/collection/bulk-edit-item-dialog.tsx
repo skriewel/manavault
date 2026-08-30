@@ -44,8 +44,10 @@ export function BulkEditCollectionItemsDialog({
   const [finish, setFinish] = useState<CollectionFinishOption>("nonfoil")
   const [updatePurchasePrice, setUpdatePurchasePrice] = useState(false)
   const [purchasePrice, setPurchasePrice] = useState("")
+  const [updateProxy, setUpdateProxy] = useState(false)
+  const [isProxy, setIsProxy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const hasSelectedFields = updateFinish || updatePurchasePrice
+  const hasSelectedFields = updateFinish || updatePurchasePrice || updateProxy
   const [updateItemsMutation, updateItems] = useMutation(BulkUpdateCollectionItemsDocument)
 
   useEffect(() => {
@@ -54,6 +56,8 @@ export function BulkEditCollectionItemsDialog({
       setFinish(commonFinish)
       setUpdatePurchasePrice(false)
       setPurchasePrice("")
+      setUpdateProxy(false)
+      setIsProxy(false)
       setError(null)
       return
     }
@@ -72,8 +76,10 @@ export function BulkEditCollectionItemsDialog({
     const result = buildBulkCollectionItemUpdateInput({
       finish,
       purchasePrice,
+      isProxy,
       updateFinish,
       updatePurchasePrice,
+      updateProxy,
     })
 
     if (!result.ok) {
@@ -149,6 +155,35 @@ export function BulkEditCollectionItemsDialog({
                 onChange={setFinish}
               />
             </fieldset>
+          </fieldset>
+
+          <fieldset className="space-y-3 rounded-box border border-base-300 p-3">
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary mt-0.5"
+                checked={updateProxy}
+                onChange={(event) => setUpdateProxy(event.target.checked)}
+              />
+              <span>
+                <span className="block text-sm font-black uppercase tracking-[0.18em] text-accent">
+                  Proxy status
+                </span>
+                <span className="block text-xs leading-tight text-base-content/55">
+                  Mark or unmark every selected item as a proxy.
+                </span>
+              </span>
+            </label>
+            <label className={`flex items-center gap-2 text-sm ${!updateProxy ? "opacity-60" : ""}`}>
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary"
+                checked={isProxy}
+                disabled={!updateProxy}
+                onChange={(event) => setIsProxy(event.target.checked)}
+              />
+              Mark as proxy
+            </label>
           </fieldset>
 
           <fieldset className="space-y-3 rounded-box border border-base-300 p-3">
