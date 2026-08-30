@@ -14,6 +14,7 @@ defmodule Manavault.Catalog.CollectionItem do
     field :purchase_price_cents, :integer
     field :for_trade, :boolean, default: false
     field :for_trade_quantity, :integer, default: 0
+    field :is_proxy, :boolean, default: false
     field :location_changed_at, :utc_datetime
 
     belongs_to :printing, Manavault.Catalog.Printing,
@@ -48,7 +49,8 @@ defmodule Manavault.Catalog.CollectionItem do
       :notes,
       :purchase_price_cents,
       :for_trade,
-      :for_trade_quantity
+      :for_trade_quantity,
+      :is_proxy
     ])
     |> sync_for_trade_fields()
     |> put_location_changed_at()
@@ -70,7 +72,8 @@ defmodule Manavault.Catalog.CollectionItem do
       :notes,
       :purchase_price_cents,
       :for_trade,
-      :for_trade_quantity
+      :for_trade_quantity,
+      :is_proxy
     ])
     |> sync_for_trade_fields()
     |> put_location_changed_at()
