@@ -59,6 +59,7 @@ export function EditCollectionItemDialog({
   const [locationId, setLocationId] = useState("")
   const [notes, setNotes] = useState("")
   const [purchasePrice, setPurchasePrice] = useState("")
+  const [isProxy, setIsProxy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const open = Boolean(item)
   const optionsQuery = useQuery(CollectionItemFormOptionsDocument, {
@@ -92,6 +93,7 @@ export function EditCollectionItemDialog({
       setLocationId(item.location?.id || "")
       setNotes(item.notes || "")
       setPurchasePrice(centsToCurrencyInput(item.purchasePriceCents))
+      setIsProxy(item.isProxy)
       setError(null)
     }
   }, [item])
@@ -139,6 +141,7 @@ export function EditCollectionItemDialog({
           locationId: locationId || null,
           notes: notes.trim() || null,
           purchasePriceCents,
+          isProxy,
         },
       },
       onCompleted: () => {
@@ -227,6 +230,22 @@ export function EditCollectionItemDialog({
               </Select>
             </label>
             <CollectionFinishField options={finishOptions} value={finish} onChange={setFinish} />
+            <label className="flex items-start gap-3 rounded-box border border-base-300 p-3">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary mt-0.5"
+                checked={isProxy}
+                onChange={(event) => setIsProxy(event.target.checked)}
+              />
+              <span>
+                <span className="block text-xs font-black uppercase tracking-[0.18em] text-accent">
+                  Proxy
+                </span>
+                <span className="block text-xs leading-tight text-base-content/55">
+                  Keep this copy in inventory and deck allocation, but exclude it from collection value.
+                </span>
+              </span>
+            </label>
             <label className="block space-y-1.5">
               <span className="text-xs font-black uppercase tracking-[0.18em] text-accent">
                 Purchase price
@@ -235,12 +254,13 @@ export function EditCollectionItemDialog({
                 className="h-9 min-h-9"
                 inputMode="decimal"
                 value={purchasePrice}
+                disabled={isProxy}
                 onChange={(event) => setPurchasePrice(event.target.value)}
                 placeholder="Current market price"
               />
               <span className="block text-xs leading-tight text-base-content/55">
-                Current {item?.priceText || "unknown"}
-                {item?.valueGainText ? (
+                {isProxy ? "Proxy · excluded from collection value" : `Current ${item?.priceText || "unknown"}`}
+                {!isProxy && item?.valueGainText ? (
                   <>
                     {" · Gain "}
                     <span className={collectionValueGainClass(item.valueGainText)}>
