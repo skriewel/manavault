@@ -9,6 +9,8 @@ defmodule Manavault.Catalog.Price do
     |> format_cents()
   end
 
+  def text_for_collection_item(%CollectionItem{is_proxy: true}), do: format_cents(0)
+
   def text_for_collection_item(%CollectionItem{printing: %Printing{} = printing, finish: finish}) do
     text_for_printing(printing, finish)
   end
@@ -103,6 +105,8 @@ defmodule Manavault.Catalog.Price do
     "#{sign}#{value}%"
   end
 
+  def collection_item_price_cents(%CollectionItem{is_proxy: true}), do: 0
+
   def collection_item_price_cents(%CollectionItem{
         printing: %Printing{} = printing,
         finish: finish
@@ -111,6 +115,8 @@ defmodule Manavault.Catalog.Price do
   end
 
   def collection_item_price_cents(_item), do: nil
+
+  def collection_item_purchase_price_cents(%CollectionItem{is_proxy: true}), do: 0
 
   def collection_item_purchase_price_cents(%CollectionItem{purchase_price_cents: cents})
       when is_integer(cents),
