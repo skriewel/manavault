@@ -5,8 +5,10 @@ import { collectionFinishValue, parseCurrencyInputCents } from "./form-helpers.t
 export type BulkCollectionItemEditFields = {
   finish: CollectionFinishOption
   purchasePrice: string
+  isProxy: boolean
   updateFinish: boolean
   updatePurchasePrice: boolean
+  updateProxy: boolean
 }
 
 export type BulkCollectionItemEditInputResult =
@@ -16,13 +18,14 @@ export type BulkCollectionItemEditInputResult =
 export function buildBulkCollectionItemUpdateInput(
   fields: BulkCollectionItemEditFields,
 ): BulkCollectionItemEditInputResult {
-  if (!fields.updateFinish && !fields.updatePurchasePrice) {
+  if (!fields.updateFinish && !fields.updatePurchasePrice && !fields.updateProxy) {
     return { ok: false, error: "Choose at least one field to update" }
   }
 
   const input: CollectionItemUpdateInput = {}
 
   if (fields.updateFinish) input.finish = collectionFinishValue(fields.finish)
+  if (fields.updateProxy) input.isProxy = fields.isProxy
 
   if (fields.updatePurchasePrice) {
     const purchasePriceCents = parseCurrencyInputCents(fields.purchasePrice)
