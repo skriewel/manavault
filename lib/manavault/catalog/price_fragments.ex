@@ -101,11 +101,15 @@ defmodule Manavault.Catalog.PriceFragments do
 
     quote do
       fragment(
-        unquote(@finish_case_sql),
-        unquote(printing).scryfall_id,
-        unquote(item).finish,
-        unquote(item).finish,
-        unquote_splicing(prices)
+        "CASE WHEN ? THEN 0 ELSE ? END",
+        unquote(item).is_proxy,
+        fragment(
+          unquote(@finish_case_sql),
+          unquote(printing).scryfall_id,
+          unquote(item).finish,
+          unquote(item).finish,
+          unquote_splicing(prices)
+        )
       )
     end
   end
@@ -124,7 +128,8 @@ defmodule Manavault.Catalog.PriceFragments do
   defmacro value_gain_cents_fragment(item, printing) do
     quote do
       fragment(
-        "? - COALESCE(?, ?)",
+        "CASE WHEN ? THEN 0 ELSE ? - COALESCE(?, ?) END",
+        unquote(item).is_proxy,
         price_cents_fragment(unquote(item), unquote(printing)),
         unquote(item).purchase_price_cents,
         price_cents_fragment(unquote(item), unquote(printing))
@@ -147,8 +152,9 @@ defmodule Manavault.Catalog.PriceFragments do
   defmacro purchase_total_cents_fragment(item, printing) do
     quote do
       fragment(
-        "COALESCE(SUM(? * COALESCE(?, ?, 0)), 0)",
+        "COALESCE(SUM(? * CASE WHEN ? THEN 0 ELSE COALESCE(?, ?, 0) END), 0)",
         unquote(item).quantity,
+        unquote(item).is_proxy,
         unquote(item).purchase_price_cents,
         price_cents_fragment(unquote(item), unquote(printing))
       )
