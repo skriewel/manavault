@@ -50,7 +50,8 @@ defmodule Manavault.Catalog.Decks.DeckCardAllocation do
           allocation = Repo.preload(allocation, [:collection_item, deck_card: :deck])
 
           with :ok <- EditGuard.ensure_deck_card_editable(allocation.deck_card) do
-            AllocationItems.restore_from_deck!(
+            AllocationItems.release_from_deck!(
+              allocation.deck_card.deck,
               allocation.collection_item,
               allocation_quantity,
               allocation.source_location_id
@@ -66,7 +67,8 @@ defmodule Manavault.Catalog.Decks.DeckCardAllocation do
           allocation = Repo.preload(allocation, [:collection_item, deck_card: :deck])
 
           with :ok <- EditGuard.ensure_deck_card_editable(allocation.deck_card) do
-            AllocationItems.restore_from_deck!(
+            AllocationItems.release_from_deck!(
+              allocation.deck_card.deck,
               allocation.collection_item,
               quantity,
               allocation.source_location_id
@@ -166,7 +168,8 @@ defmodule Manavault.Catalog.Decks.DeckCardAllocation do
 
   def insert_deck_allocation!(%DeckCard{} = deck_card, %CollectionItem{} = item, quantity) do
     source_location_id = item.location_id
-    allocated_item = AllocationItems.move_to_deck!(item, quantity)
+    deck = deck_card |> Repo.preload(:deck) |> Map.fetch!(:deck)
+    allocated_item = AllocationItems.allocate_for_deck!(deck, item, quantity)
 
     attrs = %{
       "deck_card_id" => deck_card.id,
@@ -193,7 +196,8 @@ defmodule Manavault.Catalog.Decks.DeckCardAllocation do
          quantity
        ) do
     source_location_id = item.location_id
-    allocated_item = AllocationItems.move_to_deck!(item, quantity)
+    deck = deck_card |> Repo.preload(:deck) |> Map.fetch!(:deck)
+    allocated_item = AllocationItems.allocate_for_deck!(deck, item, quantity)
 
     allocation =
       Repo.one(
