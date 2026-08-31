@@ -69,13 +69,17 @@ defmodule Manavault.Catalog.Collection.Import do
   def import_preview(%{rows: rows} = preview, create_item, opts \\ [])
       when is_list(rows) and is_function(create_item, 1) and is_list(opts) do
     Repo.transact(fn ->
-      with :ok <- validate_preview_references(rows) do
-        result = import_preview_rows(rows, create_item)
-        result = maybe_auto_sort_imported(result, opts)
+      try do
+        with :ok <- validate_preview_references(rows) do
+          result = import_preview_rows(rows, create_item)
+          result = maybe_auto_sort_imported(result, opts)
 
-        {:ok, result}
-      else
-        {:error, reason} -> Repo.rollback(reason)
+          {:ok, result}
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      rescue
+        Ecto.ConstraintError -> Repo.rollback(:stale_import_reference)
       end
     end)
     |> case do
@@ -87,25 +91,29 @@ defmodule Manavault.Catalog.Collection.Import do
   def preview_auto_sort(%{rows: rows}, create_item, opts \\ [])
       when is_list(rows) and is_function(create_item, 1) and is_list(opts) do
     Repo.transact(fn ->
-      with :ok <- validate_preview_references(rows) do
-        result = import_preview_rows(rows, create_item)
+      try do
+        with :ok <- validate_preview_references(rows) do
+          result = import_preview_rows(rows, create_item)
 
-        auto_sort_opts =
-          Keyword.merge(opts,
-            item_ids: Enum.reverse(result.item_ids),
-            dry_run: true,
-            ignore_location_debounce: true
-          )
+          auto_sort_opts =
+            Keyword.merge(opts,
+              item_ids: Enum.reverse(result.item_ids),
+              dry_run: true,
+              ignore_location_debounce: true
+            )
 
-        case AutoSort.run(auto_sort_opts) do
-          {:ok, auto_sort_result} ->
-            Repo.rollback({:auto_sort_preview, auto_sort_result})
+          case AutoSort.run(auto_sort_opts) do
+            {:ok, auto_sort_result} ->
+              Repo.rollback({:auto_sort_preview, auto_sort_result})
 
-          {:error, reason} ->
-            Repo.rollback(reason)
+            {:error, reason} ->
+              Repo.rollback(reason)
+          end
+        else
+          {:error, reason} -> Repo.rollback(reason)
         end
-      else
-        {:error, reason} -> Repo.rollback(reason)
+      rescue
+        Ecto.ConstraintError -> Repo.rollback(:stale_import_reference)
       end
     end)
     |> case do
