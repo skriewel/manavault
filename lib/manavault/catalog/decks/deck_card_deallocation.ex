@@ -41,7 +41,8 @@ defmodule Manavault.Catalog.Decks.DeckCardDeallocation do
 
   defp restore_allocations!(%DeckCard{deck_allocations: allocations} = deck_card) do
     Enum.each(allocations, fn allocation ->
-      AllocationItems.restore_from_deck!(
+      AllocationItems.release_from_deck!(
+        deck_card.deck,
         allocation.collection_item,
         allocation.quantity,
         allocation.source_location_id
