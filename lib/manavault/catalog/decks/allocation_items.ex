@@ -1,17 +1,22 @@
 defmodule Manavault.Catalog.Decks.AllocationItems do
   @moduledoc false
 
-  alias Manavault.Catalog.{Collection, CollectionItem}
+  alias Manavault.Catalog.{Collection, CollectionItem, Deck}
   alias Manavault.Repo
 
-  def move_to_deck!(%CollectionItem{} = item, quantity) do
+  def move_to_deck!(%Deck{} = deck, %CollectionItem{} = item, quantity) do
+    target_location_id = deck.location_id
+
     cond do
       item.quantity == quantity ->
-        update_collection_item_or_rollback!(item, %{"location_id" => nil})
+        update_collection_item_or_rollback!(item, %{"location_id" => target_location_id})
 
       item.quantity > quantity ->
         update_collection_item_or_rollback!(item, %{"quantity" => item.quantity - quantity})
-        create_collection_item_or_rollback!(collection_item_clone_attrs(item, quantity, nil))
+
+        create_collection_item_or_rollback!(
+          collection_item_clone_attrs(item, quantity, target_location_id)
+        )
 
       true ->
         Repo.rollback(:not_enough_available)
@@ -57,7 +62,9 @@ defmodule Manavault.Catalog.Decks.AllocationItems do
       "language" => item.language,
       "finish" => item.finish,
       "location_id" => location_id,
-      "notes" => item.notes
+      "notes" => item.notes,
+      "purchase_price_cents" => item.purchase_price_cents,
+      "is_proxy" => item.is_proxy
     }
   end
 end

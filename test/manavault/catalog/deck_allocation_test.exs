@@ -8,6 +8,105 @@ defmodule Manavault.Catalog.DeckAllocationTest do
   alias Manavault.Catalog.DeckAllocation
   alias Manavault.Repo
 
+  test "deck and cube allocations move cards into their physical deck box and restore source" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+    assert {:ok, binder} = Catalog.create_location(%{name: "Source Binder", kind: "binder"})
+    assert {:ok, deck_box} = Catalog.create_location(%{name: "Black Deck Box", kind: "deck_box"})
+
+    for {kind, name} <- [{"deck", "Black Deck"}, {"cube", "Black Cube"}] do
+      assert {:ok, item} =
+               Catalog.create_collection_item(%{
+                 "scryfall_id" => "scryfall-printing-1",
+                 "quantity" => 1,
+                 "location_id" => binder.id
+               })
+
+      assert {:ok, deck} =
+               Catalog.create_deck(%{
+                 "name" => name,
+                 "kind" => kind,
+                 "location_id" => deck_box.id
+               })
+
+      assert {:ok, deck_card} =
+               Catalog.add_card_to_deck(deck, %{"name" => "Black Lotus", "quantity" => 1})
+
+      assert {:ok, _allocation} =
+               Catalog.allocate_collection_item_to_deck_card(deck_card.id, item.id)
+
+      assert Catalog.get_collection_item!(item.id).location_id == deck_box.id
+
+      refute Enum.any?(
+               Catalog.list_collection_items(unallocated_only: true),
+               &(&1.id == item.id)
+             )
+
+      assert {:ok, _allocation} =
+               Catalog.deallocate_collection_item_from_deck_card(deck_card.id, item.id)
+
+      assert Catalog.get_collection_item!(item.id).location_id == binder.id
+    end
+  end
+
+  test "partial deck allocation leaves the unallocated stack at its source location" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+    assert {:ok, binder} = Catalog.create_location(%{name: "Playset Binder", kind: "binder"})
+    assert {:ok, deck_box} = Catalog.create_location(%{name: "Playset Deck Box", kind: "deck_box"})
+
+    assert {:ok, item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 3,
+               "location_id" => binder.id
+             })
+
+    assert {:ok, deck} =
+             Catalog.create_deck(%{"name" => "Partial Allocation", "location_id" => deck_box.id})
+
+    assert {:ok, deck_card} =
+             Catalog.add_card_to_deck(deck, %{"name" => "Black Lotus", "quantity" => 1})
+
+    assert {:ok, allocation} =
+             Catalog.allocate_collection_item_to_deck_card(deck_card.id, item.id)
+
+    assert Catalog.get_collection_item!(item.id).quantity == 2
+    assert Catalog.get_collection_item!(item.id).location_id == binder.id
+
+    allocated_item = Catalog.get_collection_item!(allocation.collection_item_id)
+    assert allocated_item.quantity == 1
+    assert allocated_item.location_id == deck_box.id
+  end
+
+  test "assigning a physical location moves existing deck allocations into that box" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+    assert {:ok, binder} = Catalog.create_location(%{name: "Original Binder", kind: "binder"})
+    assert {:ok, deck_box} = Catalog.create_location(%{name: "Commander Box", kind: "deck_box"})
+
+    assert {:ok, item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 1,
+               "location_id" => binder.id
+             })
+
+    assert {:ok, deck} = Catalog.create_deck(%{"name" => "Location Later"})
+    assert {:ok, deck_card} = Catalog.add_card_to_deck(deck, %{"name" => "Black Lotus"})
+
+    assert {:ok, _allocation} =
+             Catalog.allocate_collection_item_to_deck_card(deck_card.id, item.id)
+
+    assert is_nil(Catalog.get_collection_item!(item.id).location_id)
+
+    assert {:ok, deck} = Catalog.update_deck(deck, %{"location_id" => deck_box.id})
+    assert deck.location_id == deck_box.id
+    assert Catalog.get_collection_item!(item.id).location_id == deck_box.id
+
+    assert {:ok, _allocation} =
+             Catalog.deallocate_collection_item_from_deck_card(deck_card.id, item.id)
+
+    assert Catalog.get_collection_item!(item.id).location_id == binder.id
+  end
+
   test "cube allocations remove physical cards from available collection pulls" do
     assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
 

@@ -28,6 +28,8 @@ defmodule Manavault.Catalog.Deck do
     field :cover_image_url, :string, virtual: true
     field :commander_color_identity, {:array, :string}, virtual: true
 
+    belongs_to :location, Manavault.Catalog.Location
+
     has_many :deck_cards, Manavault.Catalog.DeckCard, on_replace: :delete
     has_many :deck_allocations, through: [:deck_cards, :deck_allocations]
     has_many :deck_tags, Manavault.Catalog.DeckTag, on_replace: :delete
@@ -51,7 +53,8 @@ defmodule Manavault.Catalog.Deck do
       :skip_count,
       :last_played_at,
       :primer,
-      :cover_deck_card_id
+      :cover_deck_card_id,
+      :location_id
     ])
     |> normalize_cube_format()
     |> validate_required([:name, :kind, :format, :status])
@@ -63,6 +66,7 @@ defmodule Manavault.Catalog.Deck do
     |> validate_inclusion(:format, @formats)
     |> validate_inclusion(:status, @statuses)
     |> foreign_key_constraint(:cover_deck_card_id)
+    |> foreign_key_constraint(:location_id)
   end
 
   defp normalize_cube_format(changeset) do

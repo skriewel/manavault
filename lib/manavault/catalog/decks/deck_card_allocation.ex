@@ -166,7 +166,8 @@ defmodule Manavault.Catalog.Decks.DeckCardAllocation do
 
   def insert_deck_allocation!(%DeckCard{} = deck_card, %CollectionItem{} = item, quantity) do
     source_location_id = item.location_id
-    allocated_item = AllocationItems.move_to_deck!(item, quantity)
+    deck_card = Repo.preload(deck_card, :deck)
+    allocated_item = AllocationItems.move_to_deck!(deck_card.deck, item, quantity)
 
     attrs = %{
       "deck_card_id" => deck_card.id,
@@ -193,7 +194,8 @@ defmodule Manavault.Catalog.Decks.DeckCardAllocation do
          quantity
        ) do
     source_location_id = item.location_id
-    allocated_item = AllocationItems.move_to_deck!(item, quantity)
+    deck_card = Repo.preload(deck_card, :deck)
+    allocated_item = AllocationItems.move_to_deck!(deck_card.deck, item, quantity)
 
     allocation =
       Repo.one(

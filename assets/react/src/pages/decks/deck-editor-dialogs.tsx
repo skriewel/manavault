@@ -22,10 +22,15 @@ import {
 import { Textarea } from "../../components/ui/textarea"
 import { useToast } from "../../components/ui/toast"
 import { refetchActiveQueries } from "../../lib/apollo"
-import { titleize } from "../../lib/utils"
+import { present, titleize } from "../../lib/utils"
+import { CollectionItemFormOptionsDocument } from "../collection/documents"
 import type { DeckDetail, DeckKind, DeckSummary } from "./deck-types"
 import { DECK_FORMATS, DECK_KINDS, DECK_STATUSES } from "./deck-types"
-import { CreateDeckDocument, DeckPlayHistoryDocument, UpdateDeckDocument } from "./queries"
+import {
+  CreateDeckDocument,
+  DeckPlayHistoryDocument,
+  UpdateDeckDocument,
+} from "./queries"
 
 export function EditDeckDialog({
   deck,
@@ -43,6 +48,7 @@ export function EditDeckDialog({
   const [kind, setKind] = useState<DeckKind>("deck")
   const [format, setFormat] = useState<(typeof DECK_FORMATS)[number]>("commander")
   const [status, setStatus] = useState<(typeof DECK_STATUSES)[number]>("brewing")
+  const [locationId, setLocationId] = useState("")
   const [playCount, setPlayCount] = useState("0")
   const [skipCount, setSkipCount] = useState("0")
   const [lastPlayedDate, setLastPlayedDate] = useState("")
@@ -55,6 +61,15 @@ export function EditDeckDialog({
     variables: { id: deck?.id || "" },
     skip: !deck || !isOpen || Boolean(inlineHistory),
   })
+  const locationOptionsQuery = useQuery(CollectionItemFormOptionsDocument, {
+    skip: !isOpen,
+    fetchPolicy: "cache-and-network",
+  })
+  const locationOptions =
+    locationOptionsQuery.data?.locations?.edges
+      ?.map((edge) => edge?.node)
+      .filter(present)
+      .filter((location) => location.kind !== "list") || []
   const history = inlineHistory || historyQuery.data?.deck
   const isHistoryReady = Boolean(history)
 
@@ -64,6 +79,7 @@ export function EditDeckDialog({
     setKind(deckKindValue(deck.kind))
     setFormat(deckFormatValue(deck.format))
     setStatus(deckStatusValue(deck.status))
+    setLocationId(deck.location?.id || "")
     setCoverDeckCardId(deck.coverDeckCardId)
     setPrimer(deck.primer || "")
     setError(null)
@@ -98,6 +114,7 @@ export function EditDeckDialog({
             kind,
             format: kind === "cube" ? "casual" : format,
             status,
+            locationId: locationId || null,
             ...history,
             primer: primer.trim() || null,
             ...(deckCards ? { coverDeckCardId } : {}),
@@ -236,6 +253,31 @@ export function EditDeckDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </label>
+
+            <label className="block space-y-2 sm:col-span-2">
+              <span className="text-xs font-black uppercase tracking-[0.18em] text-base-content/80">
+                Physical location
+              </span>
+              <Select
+                value={locationId || SELECT_NONE_VALUE}
+                onValueChange={(value) => setLocationId(value === SELECT_NONE_VALUE ? "" : value)}
+              >
+                <SelectTrigger className="min-h-11 bg-base-100 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <SelectValue placeholder="No deck box assigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SELECT_NONE_VALUE}>No physical location</SelectItem>
+                  {locationOptions.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name} ({titleize(location.kind)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="block text-sm text-base-content/65">
+                Allocated physical cards are stored at this collection location.
+              </span>
             </label>
           </div>
 
@@ -449,7 +491,18 @@ export function NewDeckDialog({
   const [kind, setKind] = useState<DeckKind>("deck")
   const [format, setFormat] = useState<(typeof DECK_FORMATS)[number]>("commander")
   const [status, setStatus] = useState<(typeof DECK_STATUSES)[number]>("brewing")
+  const [locationId, setLocationId] = useState("")
   const [error, setError] = useState<string | null>(null)
+
+  const locationOptionsQuery = useQuery(CollectionItemFormOptionsDocument, {
+    skip: !open,
+    fetchPolicy: "cache-and-network",
+  })
+  const locationOptions =
+    locationOptionsQuery.data?.locations?.edges
+      ?.map((edge) => edge?.node)
+      .filter(present)
+      .filter((location) => location.kind !== "list") || []
 
   const [createDeckMutation, createDeckResult] = useMutation(CreateDeckDocument)
   const createDeck = {
@@ -458,7 +511,13 @@ export function NewDeckDialog({
     mutate: () =>
       void createDeckMutation({
         variables: {
-          input: { name: name.trim(), kind, format: kind === "cube" ? "casual" : format, status },
+          input: {
+            name: name.trim(),
+            kind,
+            format: kind === "cube" ? "casual" : format,
+            status,
+            locationId: locationId || null,
+          },
         },
         onCompleted: (data) => {
           void refetchActiveQueries(client)
@@ -467,6 +526,7 @@ export function NewDeckDialog({
           setKind("deck")
           setFormat("commander")
           setStatus("brewing")
+          setLocationId("")
           setError(null)
           onOpenChange(false)
 
@@ -593,6 +653,31 @@ export function NewDeckDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </label>
+
+            <label className="block space-y-2 sm:col-span-2">
+              <span className="text-xs font-black uppercase tracking-[0.18em] text-accent">
+                Physical location
+              </span>
+              <Select
+                value={locationId || SELECT_NONE_VALUE}
+                onValueChange={(value) => setLocationId(value === SELECT_NONE_VALUE ? "" : value)}
+              >
+                <SelectTrigger className="bg-base-100 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <SelectValue placeholder="No deck box assigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SELECT_NONE_VALUE}>No physical location</SelectItem>
+                  {locationOptions.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name} ({titleize(location.kind)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="block text-sm text-base-content/65">
+                Choose the deck box or other collection location where this deck or cube lives.
+              </span>
             </label>
           </div>
 

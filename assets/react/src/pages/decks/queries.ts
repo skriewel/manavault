@@ -14,6 +14,11 @@ export const DecksDocument = graphql(`
           kind
           format
           status
+          location {
+            id
+            name
+            kind
+          }
           playCount
           skipCount
           lastPlayedAt
@@ -83,6 +88,11 @@ export const CreateDeckDocument = graphql(`
         kind
         format
         status
+        location {
+          id
+          name
+          kind
+        }
         primer
         aiAnalysis
         aiAnalysisModel
@@ -117,6 +127,11 @@ export const UpdateDeckDocument = graphql(`
         kind
         format
         status
+        location {
+          id
+          name
+          kind
+        }
         playCount
         skipCount
         lastPlayedAt
@@ -225,6 +240,11 @@ export const DeckDocument = graphql(`
       kind
       format
       status
+      location {
+        id
+        name
+        kind
+      }
       primer
       aiAnalysis
       aiAnalysisModel

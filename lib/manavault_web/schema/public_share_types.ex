@@ -310,6 +310,7 @@ defmodule ManavaultWeb.Schema.PublicShareTypes do
 
   node object(:deck) do
     field :name, non_null(:string)
+    field :kind, non_null(:string)
     field :format, non_null(:string)
     field :status, non_null(:string)
     field :primer, :string
@@ -318,6 +319,10 @@ defmodule ManavaultWeb.Schema.PublicShareTypes do
     field :commander_bracket, :integer
     field :commander_bracket_estimate, :integer
     field :share_token, :string
+
+    field :location, :location do
+      resolve(fn _deck, _args, _resolution -> {:ok, nil} end)
+    end
 
     field :ai_analyzed_at, :string do
       resolve(&DeckFields.deck_ai_analyzed_at/3)

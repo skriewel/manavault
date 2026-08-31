@@ -1,7 +1,7 @@
 defmodule Manavault.Catalog.Decks.Records do
   @moduledoc false
 
-  alias Manavault.Catalog.{Deck, DeckCard}
+  alias Manavault.Catalog.{Collection, Deck, DeckCard, Location}
   alias Manavault.Catalog.Decks.{Cards, DefaultTags, Preloads, Queries, ShareToken}
   alias Manavault.Repo
 
@@ -13,8 +13,13 @@ defmodule Manavault.Catalog.Decks.Records do
   end
 
   def create_deck(attrs) when is_map(attrs) do
+    changeset =
+      %Deck{}
+      |> Deck.changeset(attrs)
+      |> validate_deck_location()
+
     Repo.transact(fn ->
-      case %Deck{} |> Deck.changeset(attrs) |> Repo.insert() do
+      case Repo.insert(changeset) do
         {:ok, deck} ->
           case DefaultTags.seed_deck_default_tags(deck) do
             {:ok, _deck_tags} -> {:ok, deck}
@@ -28,11 +33,28 @@ defmodule Manavault.Catalog.Decks.Records do
   end
 
   def update_deck(%Deck{} = deck, attrs) when is_map(attrs) do
-    changeset = Deck.changeset(deck, attrs)
+    changeset =
+      deck
+      |> Deck.changeset(attrs)
+      |> validate_deck_location()
+
+    location_changed? = match?({:ok, _location_id}, Ecto.Changeset.fetch_change(changeset, :location_id))
 
     case valid_cover_deck_card?(changeset, deck.id) do
       true ->
-        Repo.update(changeset)
+        Repo.transact(fn ->
+          case Repo.update(changeset) do
+            {:ok, updated_deck} ->
+              if location_changed? do
+                move_allocated_cards_to_deck_location!(updated_deck)
+              end
+
+              {:ok, updated_deck}
+
+            {:error, changeset} ->
+              Repo.rollback(changeset)
+          end
+        end)
 
       false ->
         {:error, Ecto.Changeset.add_error(changeset, :cover_deck_card_id, "must belong to deck")}
@@ -93,6 +115,44 @@ defmodule Manavault.Catalog.Decks.Records do
   def deck_reserves_cards?(%Deck{kind: "cube", status: status}), do: status != "archived"
   def deck_reserves_cards?(%Deck{status: status}), do: deck_reserves_cards?(status)
   def deck_reserves_cards?(status) when is_binary(status), do: status in @reserving_deck_statuses
+
+  defp validate_deck_location(changeset) do
+    case Ecto.Changeset.get_field(changeset, :location_id) do
+      nil ->
+        changeset
+
+      location_id ->
+        case Repo.get(Location, location_id) do
+          %Location{kind: "list"} ->
+            Ecto.Changeset.add_error(
+              changeset,
+              :location_id,
+              "must be a physical collection location"
+            )
+
+          %Location{} ->
+            changeset
+
+          nil ->
+            changeset
+        end
+    end
+  end
+
+  defp move_allocated_cards_to_deck_location!(%Deck{} = deck) do
+    deck
+    |> Repo.preload([deck_cards: [deck_allocations: [:collection_item]]], force: true)
+    |> Map.fetch!(:deck_cards)
+    |> Enum.flat_map(& &1.deck_allocations)
+    |> Enum.map(& &1.collection_item)
+    |> Enum.uniq_by(& &1.id)
+    |> Enum.each(fn collection_item ->
+      case Collection.update_collection_item(collection_item, %{"location_id" => deck.location_id}) do
+        {:ok, _collection_item} -> :ok
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
+  end
 
   defp valid_cover_deck_card?(%Ecto.Changeset{valid?: false}, _deck_id), do: true
 

@@ -272,6 +272,7 @@ export function DeckDetailHeader({
               <Badge tone={deck.status === "active" ? "success" : "neutral"}>
                 {titleize(deck.status)}
               </Badge>
+              {deck.location ? <Badge>{deck.location.name}</Badge> : null}
               {!isCube ? (
                 <>
                   <Badge tone={deckLegalityTone(deck.legality)}>
