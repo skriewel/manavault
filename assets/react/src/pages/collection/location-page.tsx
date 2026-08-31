@@ -187,7 +187,8 @@ export function LocationPage({ id }: { id: string }) {
   const storedDecks =
     locationDecksQuery.data?.decks?.edges
       ?.map((edge) => edge?.node)
-      .filter((deck) => deck?.location?.id === id) || []
+      .filter(present)
+      .filter((deck) => deck.location?.id === id) || []
   usePageTitle(location?.name ?? (isLoading ? "Collection Location" : "Location not found"))
   const activeStructuredFilterCount = countActiveCollectionFilters(structuredFilters)
   const hasLocationFilters = Boolean(combinedCollectionQuery)
