@@ -32,7 +32,6 @@ defmodule Manavault.Catalog.CardCollection.ItemQueries.Base do
     |> maybe_filter_unallocated(unallocated_only?)
     |> maybe_filter_for_trade(for_trade_only?)
     |> maybe_filter_added_within_days(added_within_days)
-    |> maybe_exclude_deck_allocations(location_id)
     |> maybe_exclude_list_locations(location_id, include_list_locations?)
   end
 
@@ -96,18 +95,6 @@ defmodule Manavault.Catalog.CardCollection.ItemQueries.Base do
   defp maybe_filter_added_within_days(query, days) do
     cutoff = DateTime.add(DateTime.utc_now(), -days, :day)
     where(query, [item, _printing, _card, _location], item.inserted_at >= ^cutoff)
-  end
-
-  defp maybe_exclude_deck_allocations(query, ""), do: query
-
-  defp maybe_exclude_deck_allocations(query, _location_id) do
-    allocated_item_ids = from allocation in DeckAllocation, select: allocation.collection_item_id
-
-    where(
-      query,
-      [item, _printing, _card, _location],
-      item.id not in subquery(allocated_item_ids)
-    )
   end
 
   defp maybe_exclude_list_locations(query, location_id, _include_list_locations?)
