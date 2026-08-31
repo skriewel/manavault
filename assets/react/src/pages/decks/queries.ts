@@ -114,7 +114,8 @@ export const UpdateDeckDocument = graphql(`
       deck {
         id
         name
-        kind\n        format
+        kind
+        format
         status
         playCount
         skipCount
@@ -221,7 +222,8 @@ export const DeckDocument = graphql(`
     deck(id: $id) {
       id
       name
-      kind\n      format
+      kind
+      format
       status
       primer
       aiAnalysis
