@@ -36,6 +36,21 @@ defmodule Manavault.Catalog.DeckCrudTest do
     assert "is invalid" in errors_on(changeset).kind
   end
 
+  test "deck physical location must be a real collection location" do
+    assert {:ok, deck_box} = Catalog.create_location(%{name: "Deck Box", kind: "deck_box"})
+    assert {:ok, list} = Catalog.create_location(%{name: "Virtual List", kind: "list"})
+
+    assert {:ok, %Deck{location_id: location_id}} =
+             Catalog.create_deck(%{"name" => "Located Deck", "location_id" => deck_box.id})
+
+    assert location_id == deck_box.id
+
+    assert {:error, changeset} =
+             Catalog.create_deck(%{"name" => "Bad Location", "location_id" => list.id})
+
+    assert "must be a physical collection location" in errors_on(changeset).location_id
+  end
+
   test "deck CRUD stores card identities with optional preferred printings" do
     assert {:ok, %{cards_count: 2, printings_count: 2}} =
              Catalog.import_cards([@black_lotus, @time_walk])
