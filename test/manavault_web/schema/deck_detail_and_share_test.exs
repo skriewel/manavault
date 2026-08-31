@@ -182,10 +182,14 @@ defmodule ManavaultWeb.Schema.DeckDetailAndShareTest do
     |> Ecto.Changeset.change(edhrec_commander_rank: 42, edhrec_saltiness: 2.25)
     |> Manavault.Repo.update!()
 
+    {:ok, private_deck_box} =
+      Catalog.create_location(%{name: "Private Share Deck Box", kind: "deck_box"})
+
     {:ok, deck} =
       Catalog.create_deck(%{
         "name" => "Shared Deck",
-        "primer" => "## Game plan\n\nResolve **Shared Card** and protect it."
+        "primer" => "## Game plan\n\nResolve **Shared Card** and protect it.",
+        "location_id" => private_deck_box.id
       })
 
     {:ok, deck} =
@@ -255,8 +259,13 @@ defmodule ManavaultWeb.Schema.DeckDetailAndShareTest do
           deck(id: $id) {
             id
             name
+            kind
             format
             status
+            location {
+              id
+              name
+            }
             primer
             aiAnalysis
             aiAnalysisModel
@@ -401,6 +410,8 @@ defmodule ManavaultWeb.Schema.DeckDetailAndShareTest do
              "data" => %{
                "deck" => %{
                  "name" => "Shared Deck",
+                 "kind" => "deck",
+                 "location" => nil,
                  "primer" => "## Game plan\n\nResolve **Shared Card** and protect it.",
                  "aiAnalysis" => "## AI overview\n\nBuild value, then turn the corner.",
                  "aiAnalysisModel" => "test/model",
