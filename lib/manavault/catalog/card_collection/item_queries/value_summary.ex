@@ -5,7 +5,6 @@ defmodule Manavault.Catalog.CardCollection.ItemQueries.ValueSummary do
 
   alias Manavault.Catalog.CardCollection.ItemQueries.Base
   alias Manavault.Catalog.CollectionItem
-  alias Manavault.Catalog.DeckAllocation
   alias Manavault.Catalog.Printing
   alias Manavault.Repo
 
@@ -77,11 +76,8 @@ defmodule Manavault.Catalog.CardCollection.ItemQueries.ValueSummary do
   end
 
   def location_summaries do
-    allocated_item_ids = from allocation in DeckAllocation, select: allocation.collection_item_id
-
     CollectionItem
     |> join(:inner, [item], printing in assoc(item, :printing))
-    |> where([item], item.id not in subquery(allocated_item_ids))
     |> group_by([item], item.location_id)
     |> select([item, printing], %{
       location_id: item.location_id,

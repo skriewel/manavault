@@ -689,6 +689,48 @@ defmodule Manavault.Catalog.CollectionTest do
              )
   end
 
+  test "location summaries count and value cards allocated to decks and cubes" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} =
+             Catalog.import_cards([@black_lotus])
+
+    assert {:ok, cube_box} =
+             Catalog.create_location(%{name: "Cube Box", kind: "deck_box"})
+
+    assert {:ok, source} =
+             Catalog.create_location(%{name: "Source Binder", kind: "binder"})
+
+    assert {:ok, item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 1,
+               "purchase_price_cents" => 500,
+               "location_id" => source.id
+             })
+
+    assert {:ok, cube} =
+             Catalog.create_deck(%{
+               "name" => "LotR Cube",
+               "kind" => "cube",
+               "location_id" => cube_box.id
+             })
+
+    assert {:ok, deck_card} =
+             Catalog.add_card_to_deck(cube, %{"name" => "Black Lotus", "quantity" => 1})
+
+    # Warm the cached location summaries before the allocation. The allocation
+    # must invalidate that cache as well as moving the physical collection item.
+    refute Map.has_key?(Catalog.location_summaries(), cube_box.id)
+
+    assert {:ok, _allocation} =
+             Catalog.allocate_collection_item_to_deck_card(deck_card.id, item.id)
+
+    summary = Map.fetch!(Catalog.location_summaries(), cube_box.id)
+
+    assert summary.item_count == 1
+    assert summary.total_price_cents == 10_000_000
+    assert summary.purchase_price_cents == 500
+  end
+
   test "collection filtering supports allocation status via is:allocated and is:unallocated" do
     assert {:ok, %{cards_count: 2, printings_count: 2}} =
              Catalog.import_cards([@black_lotus, @time_walk])
