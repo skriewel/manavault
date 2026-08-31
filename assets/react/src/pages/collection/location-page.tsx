@@ -31,7 +31,6 @@ import {
   CollectionItemGroupsPageDocument,
   DeleteLocationDocument,
   LocationCollectionCountDocument,
-  LocationDecksDocument,
   LocationDocument,
 } from "./documents"
 import { CollectionFilterModal } from "./filter-modal"
@@ -62,6 +61,7 @@ import {
 } from "./storage"
 import type { AutoSortCollectionResult, CollectionExportFormat, CollectionSort } from "./types"
 import { collectionValueLine } from "./value-summary"
+import { DecksDocument } from "../decks/queries"
 
 const LOCATION_PAGE_SORT_STORAGE_KEY = collectionSortStorageKey("location")
 
@@ -121,7 +121,7 @@ export function LocationPage({ id }: { id: string }) {
     variables: { id },
     fetchPolicy: "cache-and-network",
   })
-  const locationDecksQuery = useQuery(LocationDecksDocument, {
+  const locationDecksQuery = useQuery(DecksDocument, {
     skip: id === "unfiled",
     fetchPolicy: "cache-and-network",
   })
