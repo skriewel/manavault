@@ -36,6 +36,7 @@ export function ShareModeHidden({
 export function SummaryActionMenu({
   analyzeLabel = "Analyze deck",
   analyzePending = false,
+  entityKind = "deck",
   label,
   onAnalyze,
   onCombos,
@@ -53,6 +54,7 @@ export function SummaryActionMenu({
 }: {
   analyzeLabel?: string
   analyzePending?: boolean
+  entityKind?: "deck" | "cube"
   label: string
   onAnalyze?: () => void
   onCombos?: () => void
@@ -100,13 +102,13 @@ export function SummaryActionMenu({
           {onShare ? (
             <DropdownMenuItem onSelect={onShare}>
               <Share2 className="h-4 w-4" />
-              Share deck
+              {entityKind === "cube" ? "Share cube" : "Share deck"}
             </DropdownMenuItem>
           ) : null}
           {onImport ? (
             <DropdownMenuItem onSelect={onImport}>
               <Upload className="h-4 w-4" />
-              Import decklist
+              {entityKind === "cube" ? "Import cube list" : "Import decklist"}
             </DropdownMenuItem>
           ) : null}
           {onMissing ? (
@@ -136,7 +138,7 @@ export function SummaryActionMenu({
           {onExport ? (
             <DropdownMenuItem onSelect={onExport}>
               <Download className="h-4 w-4" />
-              Export decklist
+              {entityKind === "cube" ? "Export cube list" : "Export decklist"}
             </DropdownMenuItem>
           ) : null}
           {onCompare ? (
@@ -148,13 +150,13 @@ export function SummaryActionMenu({
           {onDisassemble ? (
             <DropdownMenuItem destructive onSelect={onDisassemble}>
               <Scissors className="h-4 w-4" />
-              Disassemble deck
+              {entityKind === "cube" ? "Disassemble cube" : "Disassemble deck"}
             </DropdownMenuItem>
           ) : null}
           {onDelete ? (
             <DropdownMenuItem destructive onSelect={onDelete}>
               <Trash2 className="h-4 w-4" />
-              Delete deck
+              {entityKind === "cube" ? "Delete cube" : "Delete deck"}
             </DropdownMenuItem>
           ) : null}
         </DropdownMenuContent>

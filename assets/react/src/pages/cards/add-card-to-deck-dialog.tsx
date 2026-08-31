@@ -121,7 +121,7 @@ export function AddCatalogCardToDeckDialog({
       return
     }
     if (!deckId) {
-      setError("Choose a deck")
+      setError("Choose a deck or cube")
       return
     }
 
@@ -140,7 +140,9 @@ export function AddCatalogCardToDeckDialog({
       },
       onCompleted: () => {
         void client.refetchQueries({ include: "active" })
-        showToast(`${pluralize(addedQuantity, "card")} added to deck`)
+        showToast(
+          `${pluralize(addedQuantity, "card")} added to ${selectedDeck?.kind === "cube" ? "cube" : "deck"}`,
+        )
         onOpenChange(false)
         navigate({ to: "/decks/$id", params: { id: addedDeckId } })
       },
@@ -159,7 +161,7 @@ export function AddCatalogCardToDeckDialog({
       <DialogContent className="max-w-xl" labelledBy="add-catalog-card-to-deck-title">
         <DialogHeader>
           <div>
-            <DialogTitle id="add-catalog-card-to-deck-title">Add to deck</DialogTitle>
+            <DialogTitle id="add-catalog-card-to-deck-title">Add to deck or cube</DialogTitle>
             <p className="mt-1 text-sm text-base-content/60">
               {target?.cardName}
               {selectedPrinting?.setCode ? (
@@ -176,15 +178,15 @@ export function AddCatalogCardToDeckDialog({
 
         <form className="space-y-4 p-5" onSubmit={submit}>
           <label className="form-control">
-            <span className="label-text mb-1 text-sm font-semibold">Deck</span>
+            <span className="label-text mb-1 text-sm font-semibold">Deck or cube</span>
             <Select value={deckId} disabled={isAddingToDeck} onValueChange={setDeckId}>
               <SelectTrigger autoFocus aria-label="Deck">
-                <SelectValue placeholder="Choose a deck" />
+                <SelectValue placeholder="Choose a deck or cube" />
               </SelectTrigger>
               <SelectContent>
                 {decks.map((deck) => (
                   <SelectItem key={deck.id} value={deck.id}>
-                    {deck.name} ({titleize(deck.format)})
+                    {deck.name} ({deck.kind === "cube" ? "Cube" : titleize(deck.format)})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -294,7 +296,7 @@ export function AddCatalogCardToDeckDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isAddingToDeck || !deckId}>
-              {isAddingToDeck ? "Adding..." : "Add to deck"}
+              {isAddingToDeck ? "Adding..." : selectedDeck?.kind === "cube" ? "Add to cube" : "Add to deck"}
             </Button>
           </div>
         </form>

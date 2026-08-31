@@ -462,8 +462,8 @@ const CollectionItemTile = memo(function CollectionItemTile({
   const price = finish && proxyStatus !== undefined ? (proxyStatus ? "Proxy" : item.priceText) : undefined
   const allocatedLabel = allocatedQuantity
     ? freeQuantity > 0
-      ? `In deck x${allocatedQuantity} · Out x${freeQuantity}`
-      : `In deck${allocatedQuantity > 1 ? ` x${allocatedQuantity}` : ""}`
+      ? `Allocated x${allocatedQuantity} · Unallocated x${freeQuantity}`
+      : `Allocated${allocatedQuantity > 1 ? ` x${allocatedQuantity}` : ""}`
     : undefined
 
   return (

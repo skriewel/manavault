@@ -99,6 +99,7 @@ defmodule ManavaultWeb.Schema.Catalog.DeckTypes do
 
   node object(:deck) do
     field :name, non_null(:string)
+    field :kind, non_null(:string)
     field :format, non_null(:string)
     field :status, non_null(:string)
     field :play_count, non_null(:integer)
@@ -409,12 +410,14 @@ defmodule ManavaultWeb.Schema.Catalog.DeckTypes do
 
   input_object :deck_input do
     field :name, non_null(:string)
+    field :kind, :string
     field :format, :string
     field :status, :string
   end
 
   input_object :deck_update_input do
     field :name, :string
+    field :kind, :string
     field :format, :string
     field :status, :string
     field :play_count, :integer

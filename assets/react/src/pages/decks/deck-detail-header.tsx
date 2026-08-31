@@ -224,6 +224,7 @@ export function DeckDetailHeader({
   const { showToast } = useToast()
   const [questionOpen, setQuestionOpen] = useState(false)
   const [analyzeDeck, analysisMutation] = useMutation(AnalyzeDeckDocument)
+  const isCube = deck.kind === "cube"
   const hasAnalysis = Boolean(deck.aiAnalysis?.trim())
 
   function analyze() {
@@ -264,18 +265,26 @@ export function DeckDetailHeader({
           imageUrl={deck.coverImageUrl}
           fallback={<Layers className="h-12 w-12" />}
           interactive={false}
-          typeLine={<Badge>{titleize(deck.format)}</Badge>}
+          typeLine={<Badge>{isCube ? "Cube" : titleize(deck.format)}</Badge>}
           countLine={`${compactNumber(deck.cardCount || 0)} cards`}
           detailLine={
             <div className="flex flex-wrap items-center gap-2 text-base leading-none">
               <Badge tone={deck.status === "active" ? "success" : "neutral"}>
                 {titleize(deck.status)}
               </Badge>
-              <Badge tone={deckLegalityTone(deck.legality)}>
-                {deckLegalityLabel(deck.legality)}
-              </Badge>
-              <DeckBracketBadge deck={deck} />
-              <DeckSaltBadge saltSum={saltSum} />
+              {!isCube ? (
+                <>
+                  <Badge tone={deckLegalityTone(deck.legality)}>
+                    {deckLegalityLabel(deck.legality)}
+                  </Badge>
+                  <DeckBracketBadge deck={deck} />
+                  <DeckSaltBadge saltSum={saltSum} />
+                </>
+              ) : (
+                <Badge tone={deck.status === "archived" ? "neutral" : "primary"}>
+                  {deck.status === "archived" ? "Allocations retained" : "Reserves collection cards"}
+                </Badge>
+              )}
               <DeckPriceChip
                 price={deckPrice}
                 onClick={shareMode ? onShareBuylist : onMissingCards}
@@ -284,11 +293,12 @@ export function DeckDetailHeader({
             </div>
           }
           nameLine={
-            <DeckNameWithCommanderIdentity colors={deck.commanderColorIdentity} name={deck.name} />
+            <DeckNameWithCommanderIdentity\n              colors={isCube ? [] : deck.commanderColorIdentity}\n              name={deck.name}\n            />
           }
           actionSlot={
             <ShareModeHidden shareMode={shareMode}>
               <SummaryActionMenu
+                entityKind={isCube ? "cube" : "deck"}
                 analyzeLabel={
                   analysisMutation.loading
                     ? "Analyzing..."
@@ -298,13 +308,13 @@ export function DeckDetailHeader({
                 }
                 analyzePending={analysisMutation.loading}
                 label={`${deck.name} actions`}
-                onAnalyze={analyze}
-                onCombos={onCombos}
-                onCompare={onCompareDeck}
+                onAnalyze={isCube ? undefined : analyze}
+                onCombos={isCube ? undefined : onCombos}
+                onCompare={isCube ? undefined : onCompareDeck}
                 onDisassemble={canEdit ? onDisassemble : undefined}
-                onEdhrec={canEdit && deck.format === "commander" ? onOpenEdhrec : undefined}
+                onEdhrec={!isCube && canEdit && deck.format === "commander" ? onOpenEdhrec : undefined}
                 onRecommander={
-                  canEdit && deck.format === "commander" ? onOpenRecommander : undefined
+                  !isCube && canEdit && deck.format === "commander" ? onOpenRecommander : undefined
                 }
                 onEdit={onEditDeck}
                 onExport={onExportDeck}
@@ -318,7 +328,7 @@ export function DeckDetailHeader({
 
         <DeckPrimer primer={deck.primer} />
 
-        <DeckAIAnalysis deck={deck} />
+        {!isCube ? <DeckAIAnalysis deck={deck} /> : null}
 
         {!canEdit ? (
           <div className="rounded-box border border-base-300 bg-base-200/60 p-4 text-sm text-base-content/75">
@@ -333,7 +343,7 @@ export function DeckDetailHeader({
           </div>
         ) : null}
 
-        {legalityIssues.length ? (
+        {!isCube && legalityIssues.length ? (
           <div className="rounded-box border border-error/25 bg-error/5 p-4 text-sm text-base-content/80">
             <div className="mb-2 flex flex-wrap items-center gap-2 font-bold text-error">
               <AlertTriangle className="h-4 w-4" />
@@ -362,15 +372,25 @@ export function DeckDetailHeader({
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 pb-4">
           <dl className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-            {[
-              { key: "commander", label: "Commander", count: zoneCounts.commander || 0 },
-              { key: "mainboard", label: "Mainboard", count: zoneCounts.mainboard || 0 },
-              {
-                key: "considering",
-                label: "Considering",
-                count: zoneCounts.considering || 0,
-              },
-            ].map(({ key, label, count }) => (
+            {(isCube
+              ? [
+                  { key: "mainboard", label: "Cube", count: zoneCounts.mainboard || 0 },
+                  {
+                    key: "considering",
+                    label: "Considering",
+                    count: zoneCounts.considering || 0,
+                  },
+                ]
+              : [
+                  { key: "commander", label: "Commander", count: zoneCounts.commander || 0 },
+                  { key: "mainboard", label: "Mainboard", count: zoneCounts.mainboard || 0 },
+                  {
+                    key: "considering",
+                    label: "Considering",
+                    count: zoneCounts.considering || 0,
+                  },
+                ]
+            ).map(({ key, label, count }) => (
               <div key={key} className="flex items-baseline gap-1.5">
                 <dt
                   className={cn(
@@ -387,16 +407,18 @@ export function DeckDetailHeader({
           <div className="flex flex-wrap items-center gap-2">
             {shareMode ? (
               <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!deckCards.length}
-                  onClick={onSharePlaytest}
-                >
-                  <Play className="h-4 w-4" />
-                  Playtest
-                </Button>
+                {!isCube ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!deckCards.length}
+                    onClick={onSharePlaytest}
+                  >
+                    <Play className="h-4 w-4" />
+                    Playtest
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"
@@ -433,21 +455,25 @@ export function DeckDetailHeader({
               </div>
             ) : null}
             <ShareModeHidden shareMode={shareMode}>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setQuestionOpen(true)}
-              >
-                <MessageCircleQuestion className="h-4 w-4" aria-hidden="true" />
-                Ask AI
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link to="/decks/$id/playtest" params={{ id: deck.id }}>
-                  <Play className="h-4 w-4" />
-                  Playtest
-                </Link>
-              </Button>
+              {!isCube ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuestionOpen(true)}
+                  >
+                    <MessageCircleQuestion className="h-4 w-4" aria-hidden="true" />
+                    Ask AI
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/decks/$id/playtest" params={{ id: deck.id }}>
+                      <Play className="h-4 w-4" />
+                      Playtest
+                    </Link>
+                  </Button>
+                </>
+              ) : null}
               {canEdit ? (
                 <>
                   <Button type="button" size="sm" onClick={onAddCard}>

@@ -90,6 +90,7 @@ defmodule Manavault.Catalog.Decks.Records do
     end)
   end
 
+  def deck_reserves_cards?(%Deck{kind: "cube", status: status}), do: status != "archived"
   def deck_reserves_cards?(%Deck{status: status}), do: deck_reserves_cards?(status)
   def deck_reserves_cards?(status) when is_binary(status), do: status in @reserving_deck_statuses
 

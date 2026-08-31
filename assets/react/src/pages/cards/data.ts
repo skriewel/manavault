@@ -52,6 +52,7 @@ export const CardDeckOptionsDocument = graphql(`
         node {
           id
           name
+          kind
           format
           status
         }

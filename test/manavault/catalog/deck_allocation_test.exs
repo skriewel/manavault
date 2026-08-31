@@ -8,6 +8,37 @@ defmodule Manavault.Catalog.DeckAllocationTest do
   alias Manavault.Catalog.DeckAllocation
   alias Manavault.Repo
 
+  test "cube allocations remove physical cards from available collection pulls" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+
+    assert {:ok, item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 1
+             })
+
+    assert {:ok, cube} =
+             Catalog.create_deck(%{
+               "name" => "Powered Cube",
+               "kind" => "cube",
+               "format" => "casual",
+               "status" => "active"
+             })
+
+    assert {:ok, cube_card} =
+             Catalog.add_card_to_deck(cube, %{
+               "name" => "Black Lotus",
+               "quantity" => 1
+             })
+
+    assert {:ok, _allocation} =
+             Catalog.allocate_collection_item_to_deck_card(cube_card.id, item.id)
+
+    assert [] = Catalog.list_collection_items(unallocated_only: true)
+    assert [allocated] = Catalog.list_collection_items()
+    assert allocated.id == item.id
+  end
+
   test "deck allocation status covers owned available, allocated elsewhere, missing, and alternate printings" do
     assert {:ok, %{cards_count: 3, printings_count: 3}} =
              Catalog.import_cards([@black_lotus, @black_lotus_beta, @time_walk])

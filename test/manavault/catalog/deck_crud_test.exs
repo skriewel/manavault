@@ -9,6 +9,33 @@ defmodule Manavault.Catalog.DeckCrudTest do
     DeckCard
   }
 
+  test "cube decks persist kind and reserve cards until archived" do
+    assert {:ok, %Deck{} = cube} =
+             Catalog.create_deck(%{
+               "name" => "Powered Cube",
+               "kind" => "cube",
+               "format" => "vintage",
+               "status" => "brewing"
+             })
+
+    assert cube.kind == "cube"
+    assert cube.format == "casual"
+    assert Catalog.deck_reserves_cards?(cube)
+
+    assert {:ok, archived_cube} = Catalog.update_deck(cube, %{"status" => "archived"})
+    refute Catalog.deck_reserves_cards?(archived_cube)
+
+    assert {:ok, normal_deck} =
+             Catalog.create_deck(%{"name" => "Brewing Deck", "status" => "brewing"})
+
+    refute Catalog.deck_reserves_cards?(normal_deck)
+
+    assert {:error, changeset} =
+             Catalog.create_deck(%{"name" => "Invalid Kind", "kind" => "stack"})
+
+    assert "is invalid" in errors_on(changeset).kind
+  end
+
   test "deck CRUD stores card identities with optional preferred printings" do
     assert {:ok, %{cards_count: 2, printings_count: 2}} =
              Catalog.import_cards([@black_lotus, @time_walk])
