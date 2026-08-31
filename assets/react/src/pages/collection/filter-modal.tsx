@@ -28,6 +28,7 @@ import {
   type ComparisonOperator,
   type FinishFilter,
   type ManaColor,
+  type ProxyFilter,
   type RarityFilter,
 } from "../../lib/collection-filters"
 import { cn, pluralize } from "../../lib/utils"
@@ -157,6 +158,18 @@ export function CollectionFilterModal({
                 ]}
                 value={draft.allocation}
                 onChange={(allocation) => update("allocation", allocation as AllocationFilter)}
+              />
+            </FilterSection>
+
+            <FilterSection label="Proxy" syntax="is:proxy / is!=proxy">
+              <SegmentedFilter
+                options={[
+                  { value: "any", label: "Any" },
+                  { value: "proxy", label: "Proxy" },
+                  { value: "nonproxy", label: "Non-proxy" },
+                ]}
+                value={draft.proxy}
+                onChange={(proxy) => update("proxy", proxy as ProxyFilter)}
               />
             </FilterSection>
 
