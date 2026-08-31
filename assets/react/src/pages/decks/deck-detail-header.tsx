@@ -282,7 +282,7 @@ export function DeckDetailHeader({
                 </>
               ) : (
                 <Badge tone={deck.status === "archived" ? "neutral" : "primary"}>
-                  {deck.status === "archived" ? "Cards released" : "Reserves collection cards"}
+                  {deck.status === "archived" ? "Allocations retained" : "Reserves collection cards"}
                 </Badge>
               )}
               <DeckPriceChip
@@ -293,7 +293,7 @@ export function DeckDetailHeader({
             </div>
           }
           nameLine={
-            <DeckNameWithCommanderIdentity colors={deck.commanderColorIdentity} name={deck.name} />
+            <DeckNameWithCommanderIdentity\n              colors={isCube ? [] : deck.commanderColorIdentity}\n              name={deck.name}\n            />
           }
           actionSlot={
             <ShareModeHidden shareMode={shareMode}>
