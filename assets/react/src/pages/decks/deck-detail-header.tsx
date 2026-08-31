@@ -293,7 +293,10 @@ export function DeckDetailHeader({
             </div>
           }
           nameLine={
-            <DeckNameWithCommanderIdentity\n              colors={isCube ? [] : deck.commanderColorIdentity}\n              name={deck.name}\n            />
+            <DeckNameWithCommanderIdentity
+              colors={isCube ? [] : deck.commanderColorIdentity}
+              name={deck.name}
+            />
           }
           actionSlot={
             <ShareModeHidden shareMode={shareMode}>
