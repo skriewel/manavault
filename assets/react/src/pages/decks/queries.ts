@@ -102,6 +102,11 @@ export const CreateDeckDocument = graphql(`
         kind
         format
         status
+      location {
+        id
+        name
+        kind
+      }
         primer
         aiAnalysis
         aiAnalysisModel
@@ -115,11 +120,6 @@ export const CreateDeckDocument = graphql(`
         cardCount
         legality {
           status
-          location {
-            id
-            name
-            kind
-          }
           issues {
             code
             message
@@ -141,6 +141,11 @@ export const UpdateDeckDocument = graphql(`
         kind
         format
         status
+      location {
+        id
+        name
+        kind
+      }
         playCount
         skipCount
         lastPlayedAt
@@ -157,11 +162,6 @@ export const UpdateDeckDocument = graphql(`
         cardCount
         legality {
           status
-          location {
-            id
-            name
-            kind
-          }
           issues {
             code
             message
