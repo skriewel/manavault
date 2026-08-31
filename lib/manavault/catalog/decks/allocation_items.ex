@@ -1,8 +1,32 @@
 defmodule Manavault.Catalog.Decks.AllocationItems do
   @moduledoc false
 
-  alias Manavault.Catalog.{Collection, CollectionItem}
+  alias Manavault.Catalog.{Collection, CollectionItem, Deck}
   alias Manavault.Repo
+
+  def allocate_for_deck!(%Deck{kind: "cube"}, %CollectionItem{} = item, quantity) do
+    if item.quantity >= quantity do
+      item
+    else
+      Repo.rollback(:not_enough_available)
+    end
+  end
+
+  def allocate_for_deck!(%Deck{}, %CollectionItem{} = item, quantity) do
+    move_to_deck!(item, quantity)
+  end
+
+  def release_from_deck!(%Deck{kind: "cube"}, %CollectionItem{}, _quantity, _source_location_id),
+    do: :ok
+
+  def release_from_deck!(
+        %Deck{},
+        %CollectionItem{} = item,
+        quantity,
+        source_location_id
+      ) do
+    restore_from_deck!(item, quantity, source_location_id)
+  end
 
   def move_to_deck!(%CollectionItem{} = item, quantity) do
     cond do
