@@ -298,6 +298,7 @@ export function DeckDetailHeader({
           actionSlot={
             <ShareModeHidden shareMode={shareMode}>
               <SummaryActionMenu
+                entityKind={isCube ? "cube" : "deck"}
                 analyzeLabel={
                   analysisMutation.loading
                     ? "Analyzing..."
