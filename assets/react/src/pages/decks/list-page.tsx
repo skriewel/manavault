@@ -218,6 +218,7 @@ function DeckGalleryCard({
           typeLine={
             <div className="flex flex-wrap items-center gap-2">
               <Badge>{deck.kind === "cube" ? "Cube" : titleize(deck.format)}</Badge>
+              {deck.location ? <Badge>{deck.location.name}</Badge> : null}
               {deck.status === "archived" ? <Badge>Archived</Badge> : null}
             </div>
           }
