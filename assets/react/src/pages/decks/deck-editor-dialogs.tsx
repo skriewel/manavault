@@ -155,7 +155,9 @@ export function EditDeckDialog({
           <div>
             <DialogTitle id="edit-deck-title">{kind === "cube" ? "Edit cube" : "Edit deck"}</DialogTitle>
             <p className="mt-1 text-sm text-base-content/75">
-              Update deck details, historical play data, and its player guide.
+              {kind === "cube"
+                ? "Update cube details, cover art, and notes."
+                : "Update deck details, historical play data, and its player guide."}
             </p>
           </div>
           <DialogClose className="h-11 w-11" onClose={close} />
@@ -170,7 +172,7 @@ export function EditDeckDialog({
               className="min-h-11"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Deck name"
+              placeholder={kind === "cube" ? "Cube name" : "Deck name"}
               autoFocus
             />
           </label>
