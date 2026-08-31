@@ -111,9 +111,7 @@ defmodule ManavaultWeb.Schema.Catalog.DeckTypes do
     field :commander_bracket_estimate, :integer
     field :share_token, :string
 
-    field :location, :location do
-      resolve(&DeckFields.deck_location/3)
-    end
+    field :location, :location, resolve: dataloader(Catalog)
 
     field :ai_analyzed_at, :string do
       resolve(&DeckFields.deck_ai_analyzed_at/3)
