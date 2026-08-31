@@ -53,6 +53,7 @@ defmodule Manavault.Catalog.Deck do
       :primer,
       :cover_deck_card_id
     ])
+    |> normalize_cube_format()
     |> validate_required([:name, :kind, :format, :status])
     |> validate_length(:name, min: 1, max: 120)
     |> validate_length(:primer, max: 50_000)
@@ -62,6 +63,14 @@ defmodule Manavault.Catalog.Deck do
     |> validate_inclusion(:format, @formats)
     |> validate_inclusion(:status, @statuses)
     |> foreign_key_constraint(:cover_deck_card_id)
+  end
+
+  defp normalize_cube_format(changeset) do
+    if get_field(changeset, :kind) == "cube" do
+      put_change(changeset, :format, "casual")
+    else
+      changeset
+    end
   end
 
   def share_changeset(deck, share_token) do
