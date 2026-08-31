@@ -14,6 +14,11 @@ export const DecksDocument = graphql(`
           kind
           format
           status
+          location {
+            id
+            name
+            kind
+          }
           playCount
           skipCount
           lastPlayedAt
@@ -37,6 +42,20 @@ export const DecksDocument = graphql(`
               cardName
             }
           }
+        }
+      }
+    }
+  }
+`)
+
+export const DeckLocationOptionsDocument = graphql(`
+  query DeckLocationOptions {
+    locations(first: 100) {
+      edges {
+        node {
+          id
+          name
+          kind
         }
       }
     }
@@ -96,6 +115,11 @@ export const CreateDeckDocument = graphql(`
         cardCount
         legality {
           status
+          location {
+            id
+            name
+            kind
+          }
           issues {
             code
             message
@@ -133,6 +157,11 @@ export const UpdateDeckDocument = graphql(`
         cardCount
         legality {
           status
+          location {
+            id
+            name
+            kind
+          }
           issues {
             code
             message
@@ -238,6 +267,11 @@ export const DeckDocument = graphql(`
       commanderColorIdentity
       legality {
         status
+        location {
+          id
+          name
+          kind
+        }
         issues {
           code
           message
