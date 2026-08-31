@@ -35,13 +35,46 @@ defmodule Manavault.Catalog.DeckAllocationTest do
                Catalog.allocate_collection_item_to_deck_card(deck_card.id, item.id)
 
       assert Catalog.get_collection_item!(item.id).location_id == deck_box.id
-      assert [] = Catalog.list_collection_items(unallocated_only: true)
+
+      refute Enum.any?(
+               Catalog.list_collection_items(unallocated_only: true),
+               &(&1.id == item.id)
+             )
 
       assert {:ok, _allocation} =
                Catalog.deallocate_collection_item_from_deck_card(deck_card.id, item.id)
 
       assert Catalog.get_collection_item!(item.id).location_id == binder.id
     end
+  end
+
+  test "partial deck allocation leaves the unallocated stack at its source location" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+    assert {:ok, binder} = Catalog.create_location(%{name: "Playset Binder", kind: "binder"})
+    assert {:ok, deck_box} = Catalog.create_location(%{name: "Playset Deck Box", kind: "deck_box"})
+
+    assert {:ok, item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 3,
+               "location_id" => binder.id
+             })
+
+    assert {:ok, deck} =
+             Catalog.create_deck(%{"name" => "Partial Allocation", "location_id" => deck_box.id})
+
+    assert {:ok, deck_card} =
+             Catalog.add_card_to_deck(deck, %{"name" => "Black Lotus", "quantity" => 1})
+
+    assert {:ok, allocation} =
+             Catalog.allocate_collection_item_to_deck_card(deck_card.id, item.id)
+
+    assert Catalog.get_collection_item!(item.id).quantity == 2
+    assert Catalog.get_collection_item!(item.id).location_id == binder.id
+
+    allocated_item = Catalog.get_collection_item!(allocation.collection_item_id)
+    assert allocated_item.quantity == 1
+    assert allocated_item.location_id == deck_box.id
   end
 
   test "assigning a physical location moves existing deck allocations into that box" do
