@@ -237,6 +237,7 @@ function DeckGalleryCard({
         />
       </Link>
       <SummaryActionMenu
+        entityKind={deck.kind === "cube" ? "cube" : "deck"}
         label={`${deck.name} actions`}
         onCombos={deck.kind === "deck" ? onCombos : undefined}
         onEdit={onEdit}
