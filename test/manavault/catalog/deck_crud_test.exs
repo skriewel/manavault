@@ -14,11 +14,12 @@ defmodule Manavault.Catalog.DeckCrudTest do
              Catalog.create_deck(%{
                "name" => "Powered Cube",
                "kind" => "cube",
-               "format" => "casual",
+               "format" => "vintage",
                "status" => "brewing"
              })
 
     assert cube.kind == "cube"
+    assert cube.format == "casual"
     assert Catalog.deck_reserves_cards?(cube)
 
     assert {:ok, archived_cube} = Catalog.update_deck(cube, %{"status" => "archived"})
