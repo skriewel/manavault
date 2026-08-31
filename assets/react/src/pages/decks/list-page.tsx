@@ -45,9 +45,9 @@ function DeckGalleryHeader({
   return (
     <header className="mb-8 flex flex-col gap-5 border-b border-base-300 pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-4xl font-black tracking-normal">Decks</h1>
+        <h1 className="text-4xl font-black tracking-normal">Decks & Cubes</h1>
         <p className="mt-3 max-w-3xl text-base text-base-content/70">
-          Browse your deck gallery, then open a list to tune exact printings and card allocations.
+          Browse decks and cubes, then open a list to tune exact printings and card allocations.
         </p>
       </div>
       <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:flex-nowrap">
@@ -72,7 +72,7 @@ function DeckGalleryHeader({
         </Button>
         <Button type="button" className="min-w-36 flex-1 sm:flex-none" onClick={onNewDeck}>
           <Plus className="h-4 w-4" />
-          New deck
+          New deck or cube
         </Button>
       </div>
     </header>
@@ -161,7 +161,7 @@ function deckReadiness(deck: DeckSummary): DeckReadiness {
     return {
       label: titleize(deck.status),
       tone: deck.status === "archived" ? "neutral" : "success",
-      detail: deck.status === "archived" ? "Cards released" : "Reserves cards",
+      detail: deck.status === "archived" ? "Allocations retained" : "Reserves cards",
       detailTone: deck.status === "archived" ? "neutral" : "primary",
     }
   }
