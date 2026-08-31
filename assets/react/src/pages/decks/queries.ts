@@ -88,11 +88,11 @@ export const CreateDeckDocument = graphql(`
         kind
         format
         status
-      location {
-        id
-        name
-        kind
-      }
+        location {
+          id
+          name
+          kind
+        }
         primer
         aiAnalysis
         aiAnalysisModel
@@ -127,11 +127,11 @@ export const UpdateDeckDocument = graphql(`
         kind
         format
         status
-      location {
-        id
-        name
-        kind
-      }
+        location {
+          id
+          name
+          kind
+        }
         playCount
         skipCount
         lastPlayedAt
