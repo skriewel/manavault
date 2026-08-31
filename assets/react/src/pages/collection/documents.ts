@@ -192,6 +192,24 @@ export const LocationDocument = graphql(`
   }
 `)
 
+export const LocationDecksDocument = graphql(`
+  query LocationDecks {
+    decks(first: 100) {
+      edges {
+        node {
+          id
+          name
+          kind
+          status
+          location {
+            id
+          }
+        }
+      }
+    }
+  }
+`)
+
 export const LocationCollectionCountDocument = graphql(`
   query LocationCollectionCount($filters: CollectionItemFilters) {
     collectionItemCount(filters: $filters)
