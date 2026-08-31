@@ -447,8 +447,8 @@ export function DecksPage() {
     const deckName = deletingDeck.name
     void deleteDeck({
       variables: { id: deletingDeck.id },
-      onCompleted: () => showToast(`Deleted deck ${deckName}`),
-      onError: () => showToast(`Could not delete deck ${deckName}`, { tone: "error" }),
+      onCompleted: () => showToast(`Deleted ${deletingDeck.kind === "cube" ? "cube" : "deck"} ${deckName}`),
+      onError: () => showToast(`Could not delete ${deletingDeck.kind === "cube" ? "cube" : "deck"} ${deckName}`, { tone: "error" }),
     }).catch(() => undefined)
     if (editingDeck?.id === deletingDeck.id) setEditingDeck(null)
     if (sharingDeck?.id === deletingDeck.id) setSharingDeck(null)
@@ -524,9 +524,9 @@ export function DecksPage() {
       <ShareDeckDialog deck={sharingDeck} onOpenChange={(open) => !open && setSharingDeck(null)} />
       <ConfirmDialog
         destructive
-        confirmLabel="Delete deck"
+        confirmLabel={deletingDeck?.kind === "cube" ? "Delete cube" : "Delete deck"}
         open={Boolean(deletingDeck)}
-        title={deletingDeck ? `Delete ${deletingDeck.name}?` : "Delete deck?"}
+        title={deletingDeck ? `Delete ${deletingDeck.name}?` : "Delete deck or cube?"}
         onConfirm={deleteSelectedDeck}
         onOpenChange={(open) => !open && setDeletingDeck(null)}
       >
