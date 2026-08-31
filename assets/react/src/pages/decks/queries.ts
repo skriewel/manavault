@@ -48,20 +48,6 @@ export const DecksDocument = graphql(`
   }
 `)
 
-export const DeckLocationOptionsDocument = graphql(`
-  query DeckLocationOptions {
-    locations(first: 100) {
-      edges {
-        node {
-          id
-          name
-          kind
-        }
-      }
-    }
-  }
-`)
-
 export const RandomDeckDocument = graphql(`
   query RandomDeck($excludeId: ID) {
     randomDeck(excludeId: $excludeId) {
