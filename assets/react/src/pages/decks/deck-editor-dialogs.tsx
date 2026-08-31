@@ -23,11 +23,11 @@ import { Textarea } from "../../components/ui/textarea"
 import { useToast } from "../../components/ui/toast"
 import { refetchActiveQueries } from "../../lib/apollo"
 import { titleize } from "../../lib/utils"
+import { CollectionItemFormOptionsDocument } from "../collection/documents"
 import type { DeckDetail, DeckKind, DeckSummary } from "./deck-types"
 import { DECK_FORMATS, DECK_KINDS, DECK_STATUSES } from "./deck-types"
 import {
   CreateDeckDocument,
-  DeckLocationOptionsDocument,
   DeckPlayHistoryDocument,
   UpdateDeckDocument,
 } from "./queries"
@@ -61,7 +61,7 @@ export function EditDeckDialog({
     variables: { id: deck?.id || "" },
     skip: !deck || !isOpen || Boolean(inlineHistory),
   })
-  const locationOptionsQuery = useQuery(DeckLocationOptionsDocument, {
+  const locationOptionsQuery = useQuery(CollectionItemFormOptionsDocument, {
     skip: !isOpen,
     fetchPolicy: "cache-and-network",
   })
@@ -493,7 +493,7 @@ export function NewDeckDialog({
   const [locationId, setLocationId] = useState("")
   const [error, setError] = useState<string | null>(null)
 
-  const locationOptionsQuery = useQuery(DeckLocationOptionsDocument, {
+  const locationOptionsQuery = useQuery(CollectionItemFormOptionsDocument, {
     skip: !open,
     fetchPolicy: "cache-and-network",
   })
