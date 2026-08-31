@@ -111,6 +111,10 @@ defmodule ManavaultWeb.Schema.Catalog.DeckTypes do
     field :commander_bracket_estimate, :integer
     field :share_token, :string
 
+    field :location, :location do
+      resolve(&DeckFields.deck_location/3)
+    end
+
     field :ai_analyzed_at, :string do
       resolve(&DeckFields.deck_ai_analyzed_at/3)
     end
@@ -413,6 +417,7 @@ defmodule ManavaultWeb.Schema.Catalog.DeckTypes do
     field :kind, :string
     field :format, :string
     field :status, :string
+    field :location_id, :id
   end
 
   input_object :deck_update_input do
@@ -425,6 +430,7 @@ defmodule ManavaultWeb.Schema.Catalog.DeckTypes do
     field :last_played_at, :string
     field :primer, :string
     field :cover_deck_card_id, :id
+    field :location_id, :id
   end
 
   input_object :deck_card_input do
