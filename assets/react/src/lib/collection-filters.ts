@@ -2,6 +2,7 @@ export type ComparisonOperator = "=" | "!=" | ">" | ">=" | "<" | "<="
 export type ColorOperator = ":" | ">=" | "<="
 export type FinishFilter = "any" | "foil" | "nonfoil" | "etched"
 export type AllocationFilter = "any" | "allocated" | "unallocated"
+export type ProxyFilter = "any" | "proxy" | "nonproxy"
 export type RarityFilter = "common" | "uncommon" | "rare" | "mythic"
 export type ManaColor = "w" | "u" | "b" | "r" | "g" | "c"
 
@@ -22,6 +23,7 @@ export type CollectionFilterState = {
   language: string
   finish: FinishFilter
   allocation: AllocationFilter
+  proxy: ProxyFilter
   quantityOperator: ComparisonOperator
   quantity: string
   priceOperator: ComparisonOperator
@@ -36,6 +38,7 @@ const COMPARISON_OPERATORS: readonly ComparisonOperator[] = ["=", "!=", ">", ">=
 const COLOR_OPERATORS: readonly ColorOperator[] = [":", ">=", "<="]
 const FINISH_FILTERS: readonly FinishFilter[] = ["any", "foil", "nonfoil", "etched"]
 const ALLOCATION_FILTERS: readonly AllocationFilter[] = ["any", "allocated", "unallocated"]
+const PROXY_FILTERS: readonly ProxyFilter[] = ["any", "proxy", "nonproxy"]
 const RARITY_FILTERS: readonly RarityFilter[] = ["common", "uncommon", "rare", "mythic"]
 const MANA_COLORS: readonly ManaColor[] = ["w", "u", "b", "r", "g", "c"]
 
@@ -56,6 +59,7 @@ export const EMPTY_COLLECTION_FILTERS: CollectionFilterState = {
   language: "",
   finish: "any",
   allocation: "any",
+  proxy: "any",
   quantityOperator: ">=",
   quantity: "",
   priceOperator: ">=",
@@ -80,6 +84,7 @@ export function buildCollectionFilterQuery(filters: CollectionFilterState) {
     textPredicate("lang", filters.language),
     filters.finish === "any" ? "" : `is:${filters.finish}`,
     filters.allocation === "any" ? "" : `is:${filters.allocation}`,
+    filters.proxy === "any" ? "" : filters.proxy === "proxy" ? "is:proxy" : "is!=proxy",
     comparisonPredicate("qty", filters.quantityOperator, filters.quantity),
     comparisonPredicate("usd", filters.priceOperator, filters.priceUsd),
     comparisonPredicate("date", filters.dateOperator, filters.releasedDate),
@@ -111,6 +116,7 @@ export function countActiveCollectionFilters(filters: CollectionFilterState) {
     filters.language.trim(),
     filters.finish !== "any",
     filters.allocation !== "any",
+    filters.proxy !== "any",
     filters.quantity.trim(),
     filters.priceUsd.trim(),
     filters.releasedDate.trim(),
@@ -163,6 +169,7 @@ export function encodeCollectionFilters(filters: CollectionFilterState) {
     finish: filters.finish === EMPTY_COLLECTION_FILTERS.finish ? undefined : filters.finish,
     allocation:
       filters.allocation === EMPTY_COLLECTION_FILTERS.allocation ? undefined : filters.allocation,
+    proxy: filters.proxy === EMPTY_COLLECTION_FILTERS.proxy ? undefined : filters.proxy,
     quantity: trimmedValue(filters.quantity),
     quantityOperator:
       filters.quantity.trim() &&
@@ -232,6 +239,7 @@ export function decodeCollectionFilters(value: unknown): CollectionFilterState {
   filters.language = stringValue(decoded.language)
   filters.finish = operatorValue(decoded.finish, FINISH_FILTERS, filters.finish)
   filters.allocation = operatorValue(decoded.allocation, ALLOCATION_FILTERS, filters.allocation)
+  filters.proxy = operatorValue(decoded.proxy, PROXY_FILTERS, filters.proxy)
   filters.quantity = stringValue(decoded.quantity)
   filters.quantityOperator = operatorValue(
     decoded.quantityOperator,
