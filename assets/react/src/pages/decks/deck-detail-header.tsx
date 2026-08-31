@@ -224,6 +224,7 @@ export function DeckDetailHeader({
   const { showToast } = useToast()
   const [questionOpen, setQuestionOpen] = useState(false)
   const [analyzeDeck, analysisMutation] = useMutation(AnalyzeDeckDocument)
+  const isCube = deck.kind === "cube"
   const hasAnalysis = Boolean(deck.aiAnalysis?.trim())
 
   function analyze() {
@@ -264,18 +265,26 @@ export function DeckDetailHeader({
           imageUrl={deck.coverImageUrl}
           fallback={<Layers className="h-12 w-12" />}
           interactive={false}
-          typeLine={<Badge>{titleize(deck.format)}</Badge>}
+          typeLine={<Badge>{isCube ? "Cube" : titleize(deck.format)}</Badge>}
           countLine={`${compactNumber(deck.cardCount || 0)} cards`}
           detailLine={
             <div className="flex flex-wrap items-center gap-2 text-base leading-none">
               <Badge tone={deck.status === "active" ? "success" : "neutral"}>
                 {titleize(deck.status)}
               </Badge>
-              <Badge tone={deckLegalityTone(deck.legality)}>
-                {deckLegalityLabel(deck.legality)}
-              </Badge>
-              <DeckBracketBadge deck={deck} />
-              <DeckSaltBadge saltSum={saltSum} />
+              {!isCube ? (
+                <>
+                  <Badge tone={deckLegalityTone(deck.legality)}>
+                    {deckLegalityLabel(deck.legality)}
+                  </Badge>
+                  <DeckBracketBadge deck={deck} />
+                  <DeckSaltBadge saltSum={saltSum} />
+                </>
+              ) : (
+                <Badge tone={deck.status === "archived" ? "neutral" : "primary"}>
+                  {deck.status === "archived" ? "Cards released" : "Reserves collection cards"}
+                </Badge>
+              )}
               <DeckPriceChip
                 price={deckPrice}
                 onClick={shareMode ? onShareBuylist : onMissingCards}
@@ -298,13 +307,13 @@ export function DeckDetailHeader({
                 }
                 analyzePending={analysisMutation.loading}
                 label={`${deck.name} actions`}
-                onAnalyze={analyze}
-                onCombos={onCombos}
-                onCompare={onCompareDeck}
+                onAnalyze={isCube ? undefined : analyze}
+                onCombos={isCube ? undefined : onCombos}
+                onCompare={isCube ? undefined : onCompareDeck}
                 onDisassemble={canEdit ? onDisassemble : undefined}
-                onEdhrec={canEdit && deck.format === "commander" ? onOpenEdhrec : undefined}
+                onEdhrec={!isCube && canEdit && deck.format === "commander" ? onOpenEdhrec : undefined}
                 onRecommander={
-                  canEdit && deck.format === "commander" ? onOpenRecommander : undefined
+                  !isCube && canEdit && deck.format === "commander" ? onOpenRecommander : undefined
                 }
                 onEdit={onEditDeck}
                 onExport={onExportDeck}
@@ -318,7 +327,7 @@ export function DeckDetailHeader({
 
         <DeckPrimer primer={deck.primer} />
 
-        <DeckAIAnalysis deck={deck} />
+        {!isCube ? <DeckAIAnalysis deck={deck} /> : null}
 
         {!canEdit ? (
           <div className="rounded-box border border-base-300 bg-base-200/60 p-4 text-sm text-base-content/75">
@@ -333,7 +342,7 @@ export function DeckDetailHeader({
           </div>
         ) : null}
 
-        {legalityIssues.length ? (
+        {!isCube && legalityIssues.length ? (
           <div className="rounded-box border border-error/25 bg-error/5 p-4 text-sm text-base-content/80">
             <div className="mb-2 flex flex-wrap items-center gap-2 font-bold text-error">
               <AlertTriangle className="h-4 w-4" />
