@@ -4,6 +4,90 @@ defmodule ManavaultWeb.Schema.DeckMutationsTest do
 
   alias Manavault.Catalog
 
+  test "create and update deck mutations decode physical location relay IDs", %{conn: conn} do
+    assert {:ok, first_box} = Catalog.create_location(%{"name" => "First Deck Box", "kind" => "deck_box"})
+    assert {:ok, second_box} = Catalog.create_location(%{"name" => "Second Deck Box", "kind" => "deck_box"})
+
+    create_conn =
+      post(conn, "/api/graphql", %{
+        "query" => """
+        mutation CreateDeck($input: DeckInput!) {
+          createDeck(input: $input) {
+            deck {
+              id
+              name
+              location {
+                id
+                name
+              }
+            }
+          }
+        }
+        """,
+        "variables" => %{
+          "input" => %{
+            "name" => "Located Cube",
+            "kind" => "cube",
+            "locationId" => global_location_id(first_box)
+          }
+        }
+      })
+
+    assert %{
+             "data" => %{
+               "createDeck" => %{
+                 "deck" => %{
+                   "id" => deck_id,
+                   "name" => "Located Cube",
+                   "location" => %{
+                     "id" => first_location_id,
+                     "name" => "First Deck Box"
+                   }
+                 }
+               }
+             }
+           } = json_response(create_conn, 200)
+
+    assert first_location_id == global_location_id(first_box)
+
+    update_conn =
+      post(conn, "/api/graphql", %{
+        "query" => """
+        mutation UpdateDeck($id: ID!, $input: DeckUpdateInput!) {
+          updateDeck(id: $id, input: $input) {
+            deck {
+              id
+              location {
+                id
+                name
+              }
+            }
+          }
+        }
+        """,
+        "variables" => %{
+          "id" => deck_id,
+          "input" => %{"locationId" => global_location_id(second_box)}
+        }
+      })
+
+    assert %{
+             "data" => %{
+               "updateDeck" => %{
+                 "deck" => %{
+                   "id" => ^deck_id,
+                   "location" => %{
+                     "id" => second_location_id,
+                     "name" => "Second Deck Box"
+                   }
+                 }
+               }
+             }
+           } = json_response(update_conn, 200)
+
+    assert second_location_id == global_location_id(second_box)
+  end
+
   test "update deck mutation updates deck fields", %{conn: conn} do
     assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
 
@@ -445,6 +529,10 @@ defmodule ManavaultWeb.Schema.DeckMutationsTest do
     restored_item = Catalog.get_collection_item!(allocation.collection_item_id)
     assert restored_item.location_id == source_location.id
     assert restored_item.quantity == 1
+  end
+
+  defp global_location_id(location) do
+    Absinthe.Relay.Node.to_global_id(:location, location.id, ManavaultWeb.Schema)
   end
 
   defp global_deck_id(deck) do
