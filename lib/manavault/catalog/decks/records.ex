@@ -141,7 +141,7 @@ defmodule Manavault.Catalog.Decks.Records do
 
   defp move_allocated_cards_to_deck_location!(%Deck{} = deck) do
     deck
-    |> Repo.preload(deck_cards: [deck_allocations: [:collection_item]], force: true)
+    |> Repo.preload([deck_cards: [deck_allocations: [:collection_item]]], force: true)
     |> Map.fetch!(:deck_cards)
     |> Enum.flat_map(& &1.deck_allocations)
     |> Enum.map(& &1.collection_item)
