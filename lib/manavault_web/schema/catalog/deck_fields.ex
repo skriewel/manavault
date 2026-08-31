@@ -5,7 +5,8 @@ defmodule ManavaultWeb.Schema.Catalog.DeckFields do
 
   alias Absinthe.Relay.Node
   alias Manavault.Catalog
-  alias Manavault.Catalog.{Deck, DeckCard, Price}
+  alias Manavault.Catalog.{Deck, DeckCard, Location, Price}
+  alias Manavault.Repo
   alias ManavaultWeb.Schema.RelayHelpers
 
   def buylist_entry_unit_price_text(parent, _args, _resolution) do
@@ -114,6 +115,15 @@ defmodule ManavaultWeb.Schema.Catalog.DeckFields do
 
   def deck_commander_color_identity(%Deck{} = deck, _args, _resolution) do
     {:ok, Catalog.deck_commander_color_identity(deck)}
+  end
+
+  def deck_location(%Deck{location_id: nil}, _args, _resolution), do: {:ok, nil}
+
+  def deck_location(%Deck{location: %Location{} = location}, _args, _resolution),
+    do: {:ok, location}
+
+  def deck_location(%Deck{location_id: location_id}, _args, _resolution) do
+    {:ok, Repo.get(Location, location_id)}
   end
 
   def deck_ai_analyzed_at(%Deck{ai_analyzed_at: nil}, _args, _resolution), do: {:ok, nil}
