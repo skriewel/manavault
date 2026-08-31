@@ -644,6 +644,51 @@ defmodule Manavault.Catalog.CollectionTest do
     assert Enum.map([lotus_card, walk_card], & &1.oracle_id) == ["oracle-1", "oracle-2"]
   end
 
+  test "physical location listings include cards allocated to decks and cubes" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} =
+             Catalog.import_cards([@black_lotus])
+
+    assert {:ok, deck_box} =
+             Catalog.create_location(%{name: "Cube Box", kind: "deck_box"})
+
+    assert {:ok, source} =
+             Catalog.create_location(%{name: "Source Binder", kind: "binder"})
+
+    assert {:ok, item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 1,
+               "location_id" => source.id
+             })
+
+    assert {:ok, cube} =
+             Catalog.create_deck(%{
+               "name" => "LotR Cube",
+               "kind" => "cube",
+               "location_id" => deck_box.id
+             })
+
+    assert {:ok, deck_card} =
+             Catalog.add_card_to_deck(cube, %{"name" => "Black Lotus", "quantity" => 1})
+
+    assert {:ok, allocation} =
+             Catalog.allocate_collection_item_to_deck_card(deck_card.id, item.id)
+
+    allocated_item = Catalog.get_collection_item!(allocation.collection_item_id)
+    assert allocated_item.location_id == deck_box.id
+
+    assert [allocated_item.id] ==
+             collection_item_ids(location_id: Integer.to_string(deck_box.id))
+
+    assert Catalog.count_collection_items(location_id: Integer.to_string(deck_box.id)) == 1
+
+    assert [] ==
+             collection_item_ids(
+               location_id: Integer.to_string(deck_box.id),
+               unallocated_only: true
+             )
+  end
+
   test "collection filtering supports allocation status via is:allocated and is:unallocated" do
     assert {:ok, %{cards_count: 2, printings_count: 2}} =
              Catalog.import_cards([@black_lotus, @time_walk])
