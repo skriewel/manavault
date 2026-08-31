@@ -214,7 +214,7 @@ export function EditDeckDialog({
               </label>
               ) : (
               <div className="rounded-box border border-base-300 bg-base-200/40 p-3 text-sm text-base-content/70">
-                Cube cards reserve their physical collection copies until the cube is archived.
+                Cube cards reserve their physical collection copies until they are deallocated or removed.
               </div>
             )}
 
@@ -456,7 +456,7 @@ export function NewDeckDialog({
         },
         onCompleted: (data) => {
           void refetchActiveQueries(client)
-          showToast(`Created deck ${name.trim()}`)
+          showToast(`Created ${kind === "cube" ? "cube" : "deck"} ${name.trim()}`)
           setName("")
           setKind("deck")
           setFormat("commander")
