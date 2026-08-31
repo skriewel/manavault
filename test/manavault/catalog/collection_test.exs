@@ -717,6 +717,10 @@ defmodule Manavault.Catalog.CollectionTest do
     assert {:ok, deck_card} =
              Catalog.add_card_to_deck(cube, %{"name" => "Black Lotus", "quantity" => 1})
 
+    # Warm the cached location summaries before the allocation. The allocation
+    # must invalidate that cache as well as moving the physical collection item.
+    refute Map.has_key?(Catalog.location_summaries(), cube_box.id)
+
     assert {:ok, _allocation} =
              Catalog.allocate_collection_item_to_deck_card(deck_card.id, item.id)
 
