@@ -97,6 +97,9 @@ defmodule Manavault.Catalog.CardCollection.SearchFilter.ScalarPredicates do
         "unallocated" ->
           dynamic([item, printing, card, location], not (^allocated_to_deck()))
 
+        "proxy" ->
+          dynamic([item, _printing, _card, _location], item.is_proxy == true)
+
         "colorless" ->
           ColorPredicates.count(:colors, :eq, 0, :eq)
 

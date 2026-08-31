@@ -182,6 +182,20 @@ defmodule Manavault.Catalog.CollectionTest do
            } = Catalog.collection_value_summary()
   end
 
+  test "collection search filters proxy and non-proxy items" do
+    assert {:ok, %{cards_count: 2, printings_count: 2}} =
+             Catalog.import_cards([@black_lotus, @time_walk])
+
+    proxy = create_collection_item!("scryfall-printing-1", is_proxy: true)
+    real = create_collection_item!("scryfall-printing-2")
+
+    assert [proxy_result] = Catalog.list_collection_items(q: "is:proxy")
+    assert proxy_result.id == proxy.id
+
+    assert [real_result] = Catalog.list_collection_items(q: "is!=proxy")
+    assert real_result.id == real.id
+  end
+
   test "collection CSV export and import preserve proxy status" do
     assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
 
