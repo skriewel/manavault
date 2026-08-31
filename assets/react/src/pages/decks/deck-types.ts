@@ -69,6 +69,18 @@ export function flattenDecks(decks: Maybe<DecksQuery["decks"]>): DeckSummary[] {
   return connectionNodes(decks)
 }
 
+export function partitionDecksByKind(decks: DeckSummary[]) {
+  const normalDecks: DeckSummary[] = []
+  const cubes: DeckSummary[] = []
+
+  for (const deck of decks) {
+    if (deck.kind === "cube") cubes.push(deck)
+    else normalDecks.push(deck)
+  }
+
+  return { normalDecks, cubes }
+}
+
 export function partitionDecksByArchive(decks: DeckSummary[]) {
   const activeDecks: DeckSummary[] = []
   const archivedDecks: DeckSummary[] = []
@@ -200,6 +212,9 @@ export type DeckCustomTag = {
   position: number
   cardCount: number
 }
+export const DECK_KINDS = ["deck", "cube"] as const
+export type DeckKind = (typeof DECK_KINDS)[number]
+
 export const DECK_FORMATS = [
   "commander",
   "standard",
