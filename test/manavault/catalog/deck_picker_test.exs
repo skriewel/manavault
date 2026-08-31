@@ -30,6 +30,22 @@ defmodule Manavault.Catalog.DeckPickerTest do
     assert weights[5] > weights[2]
   end
 
+  test "random deck picker excludes cubes" do
+    assert {:ok, deck} = Catalog.create_deck(%{"name" => "Normal", "status" => "active"})
+
+    assert {:ok, cube} =
+             Catalog.create_deck(%{
+               "name" => "Cube",
+               "kind" => "cube",
+               "format" => "casual",
+               "status" => "active"
+             })
+
+    assert %Deck{id: id} = Catalog.random_deck(random: fn -> 0.99 end)
+    assert id == deck.id
+    assert {:error, :cube_not_playable} = Catalog.record_deck_play(cube, :played)
+  end
+
   test "random deck excludes archived decks and the previous suggestion when possible" do
     assert {:ok, alpha} = Catalog.create_deck(%{"name" => "Alpha", "status" => "active"})
     assert {:ok, beta} = Catalog.create_deck(%{"name" => "Beta", "status" => "brewing"})
