@@ -240,6 +240,11 @@ export const DeckDocument = graphql(`
       kind
       format
       status
+      location {
+        id
+        name
+        kind
+      }
       primer
       aiAnalysis
       aiAnalysisModel
@@ -253,11 +258,6 @@ export const DeckDocument = graphql(`
       commanderColorIdentity
       legality {
         status
-        location {
-          id
-          name
-          kind
-        }
         issues {
           code
           message
