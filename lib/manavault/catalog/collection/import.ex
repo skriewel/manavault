@@ -69,10 +69,18 @@ defmodule Manavault.Catalog.Collection.Import do
   def import_preview(%{rows: rows} = preview, create_item, opts \\ [])
       when is_list(rows) and is_function(create_item, 1) and is_list(opts) do
     Repo.transact(fn ->
-      result = import_preview_rows(rows, create_item)
-      result = maybe_auto_sort_imported(result, opts)
+      try do
+        with :ok <- validate_preview_references(rows) do
+          result = import_preview_rows(rows, create_item)
+          result = maybe_auto_sort_imported(result, opts)
 
-      {:ok, result}
+          {:ok, result}
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      rescue
+        Ecto.ConstraintError -> Repo.rollback(:stale_import_reference)
+      end
     end)
     |> case do
       {:ok, result} -> {:ok, Map.merge(preview, result)}
@@ -83,21 +91,29 @@ defmodule Manavault.Catalog.Collection.Import do
   def preview_auto_sort(%{rows: rows}, create_item, opts \\ [])
       when is_list(rows) and is_function(create_item, 1) and is_list(opts) do
     Repo.transact(fn ->
-      result = import_preview_rows(rows, create_item)
+      try do
+        with :ok <- validate_preview_references(rows) do
+          result = import_preview_rows(rows, create_item)
 
-      auto_sort_opts =
-        Keyword.merge(opts,
-          item_ids: Enum.reverse(result.item_ids),
-          dry_run: true,
-          ignore_location_debounce: true
-        )
+          auto_sort_opts =
+            Keyword.merge(opts,
+              item_ids: Enum.reverse(result.item_ids),
+              dry_run: true,
+              ignore_location_debounce: true
+            )
 
-      case AutoSort.run(auto_sort_opts) do
-        {:ok, auto_sort_result} ->
-          Repo.rollback({:auto_sort_preview, auto_sort_result})
+          case AutoSort.run(auto_sort_opts) do
+            {:ok, auto_sort_result} ->
+              Repo.rollback({:auto_sort_preview, auto_sort_result})
 
-        {:error, reason} ->
-          Repo.rollback(reason)
+            {:error, reason} ->
+              Repo.rollback(reason)
+          end
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      rescue
+        Ecto.ConstraintError -> Repo.rollback(:stale_import_reference)
       end
     end)
     |> case do
@@ -105,6 +121,66 @@ defmodule Manavault.Catalog.Collection.Import do
       {:error, reason} -> {:error, reason}
       {:ok, auto_sort_result} -> {:ok, auto_sort_result}
     end
+  end
+
+  defp validate_preview_references(rows) do
+    exact_attrs =
+      rows
+      |> Enum.filter(&(&1.status == :exact))
+      |> Enum.map(& &1.attrs)
+
+    with :ok <- validate_preview_locations(exact_attrs),
+         :ok <- validate_preview_printings(exact_attrs) do
+      :ok
+    end
+  end
+
+  defp validate_preview_locations(attrs_list) do
+    location_ids =
+      attrs_list
+      |> Enum.map(&Map.get(&1, "location_id"))
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
+    existing_ids =
+      case location_ids do
+        [] ->
+          []
+
+        ids ->
+          Location
+          |> where([location], location.id in ^ids)
+          |> select([location], location.id)
+          |> Repo.all()
+      end
+
+    if MapSet.new(location_ids) == MapSet.new(existing_ids),
+      do: :ok,
+      else: {:error, :location_not_found}
+  end
+
+  defp validate_preview_printings(attrs_list) do
+    scryfall_ids =
+      attrs_list
+      |> Enum.map(&Map.get(&1, "scryfall_id"))
+      |> Enum.reject(&(&1 in [nil, ""]))
+      |> Enum.uniq()
+
+    existing_ids =
+      case scryfall_ids do
+        [] ->
+          []
+
+        ids ->
+          Printing
+          |> where([printing], printing.scryfall_id in ^ids)
+          |> select([printing], printing.scryfall_id)
+          |> Repo.all()
+      end
+
+    if MapSet.new(scryfall_ids) == MapSet.new(existing_ids),
+      do: :ok,
+      else: {:error, :printing_not_found}
   end
 
   defp import_preview_rows(rows, create_item) do
