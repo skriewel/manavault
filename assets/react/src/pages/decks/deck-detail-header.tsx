@@ -371,15 +371,25 @@ export function DeckDetailHeader({
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 pb-4">
           <dl className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-            {[
-              { key: "commander", label: "Commander", count: zoneCounts.commander || 0 },
-              { key: "mainboard", label: "Mainboard", count: zoneCounts.mainboard || 0 },
-              {
-                key: "considering",
-                label: "Considering",
-                count: zoneCounts.considering || 0,
-              },
-            ].map(({ key, label, count }) => (
+            {(isCube
+              ? [
+                  { key: "mainboard", label: "Cube", count: zoneCounts.mainboard || 0 },
+                  {
+                    key: "considering",
+                    label: "Considering",
+                    count: zoneCounts.considering || 0,
+                  },
+                ]
+              : [
+                  { key: "commander", label: "Commander", count: zoneCounts.commander || 0 },
+                  { key: "mainboard", label: "Mainboard", count: zoneCounts.mainboard || 0 },
+                  {
+                    key: "considering",
+                    label: "Considering",
+                    count: zoneCounts.considering || 0,
+                  },
+                ]
+            ).map(({ key, label, count }) => (
               <div key={key} className="flex items-baseline gap-1.5">
                 <dt
                   className={cn(
@@ -396,16 +406,18 @@ export function DeckDetailHeader({
           <div className="flex flex-wrap items-center gap-2">
             {shareMode ? (
               <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!deckCards.length}
-                  onClick={onSharePlaytest}
-                >
-                  <Play className="h-4 w-4" />
-                  Playtest
-                </Button>
+                {!isCube ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!deckCards.length}
+                    onClick={onSharePlaytest}
+                  >
+                    <Play className="h-4 w-4" />
+                    Playtest
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"
@@ -442,21 +454,25 @@ export function DeckDetailHeader({
               </div>
             ) : null}
             <ShareModeHidden shareMode={shareMode}>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setQuestionOpen(true)}
-              >
-                <MessageCircleQuestion className="h-4 w-4" aria-hidden="true" />
-                Ask AI
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link to="/decks/$id/playtest" params={{ id: deck.id }}>
-                  <Play className="h-4 w-4" />
-                  Playtest
-                </Link>
-              </Button>
+              {!isCube ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuestionOpen(true)}
+                  >
+                    <MessageCircleQuestion className="h-4 w-4" aria-hidden="true" />
+                    Ask AI
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/decks/$id/playtest" params={{ id: deck.id }}>
+                      <Play className="h-4 w-4" />
+                      Playtest
+                    </Link>
+                  </Button>
+                </>
+              ) : null}
               {canEdit ? (
                 <>
                   <Button type="button" size="sm" onClick={onAddCard}>
