@@ -22,7 +22,7 @@ import {
 import { Textarea } from "../../components/ui/textarea"
 import { useToast } from "../../components/ui/toast"
 import { refetchActiveQueries } from "../../lib/apollo"
-import { titleize } from "../../lib/utils"
+import { present, titleize } from "../../lib/utils"
 import { CollectionItemFormOptionsDocument } from "../collection/documents"
 import type { DeckDetail, DeckKind, DeckSummary } from "./deck-types"
 import { DECK_FORMATS, DECK_KINDS, DECK_STATUSES } from "./deck-types"
@@ -68,7 +68,8 @@ export function EditDeckDialog({
   const locationOptions =
     locationOptionsQuery.data?.locations?.edges
       ?.map((edge) => edge?.node)
-      .filter((location) => location && location.kind !== "list") || []
+      .filter(present)
+      .filter((location) => location.kind !== "list") || []
   const history = inlineHistory || historyQuery.data?.deck
   const isHistoryReady = Boolean(history)
 
@@ -500,7 +501,8 @@ export function NewDeckDialog({
   const locationOptions =
     locationOptionsQuery.data?.locations?.edges
       ?.map((edge) => edge?.node)
-      .filter((location) => location && location.kind !== "list") || []
+      .filter(present)
+      .filter((location) => location.kind !== "list") || []
 
   const [createDeckMutation, createDeckResult] = useMutation(CreateDeckDocument)
   const createDeck = {
