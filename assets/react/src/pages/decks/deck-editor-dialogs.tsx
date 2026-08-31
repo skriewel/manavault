@@ -153,7 +153,7 @@ export function EditDeckDialog({
       >
         <DialogHeader>
           <div>
-            <DialogTitle id="edit-deck-title">Edit deck</DialogTitle>
+            <DialogTitle id="edit-deck-title">{kind === "cube" ? "Edit cube" : "Edit deck"}</DialogTitle>
             <p className="mt-1 text-sm text-base-content/75">
               Update deck details, historical play data, and its player guide.
             </p>
@@ -237,6 +237,7 @@ export function EditDeckDialog({
             </label>
           </div>
 
+          {kind === "deck" ? (
           <fieldset
             aria-busy={!isHistoryReady}
             className="rounded-box border border-base-300 bg-base-200/40 p-4"
@@ -299,6 +300,7 @@ export function EditDeckDialog({
               </label>
             </div>
           </fieldset>
+          ) : null}
 
           {deckCards ? (
             <label className="block space-y-2">
@@ -318,7 +320,7 @@ export function EditDeckDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={SELECT_NONE_VALUE}>Automatic (commander first)</SelectItem>
+                  <SelectItem value={SELECT_NONE_VALUE}>{kind === "cube" ? "Automatic" : "Automatic (commander first)"}</SelectItem>
                   {deckCards.map((deckCard) => (
                     <SelectItem key={deckCard.id} value={deckCard.id}>
                       {deckCard.card?.name || "Unknown card"} ·{" "}
@@ -328,7 +330,9 @@ export function EditDeckDialog({
                 </SelectContent>
               </Select>
               <span className="block text-sm text-base-content/75">
-                Uses the commander by default. Choose any card in this deck to override it.
+                {kind === "cube"
+                  ? "Choose any card in this cube to use as its cover."
+                  : "Uses the commander by default. Choose any card in this deck to override it."}
               </span>
             </label>
           ) : null}
@@ -378,7 +382,7 @@ export function EditDeckDialog({
               disabled={!isHistoryReady || updateDeck.isPending}
             >
               <Edit3 className="h-4 w-4" />
-              {updateDeck.isPending ? "Saving..." : "Save deck"}
+              {updateDeck.isPending ? "Saving..." : kind === "cube" ? "Save cube" : "Save deck"}
             </Button>
           </div>
         </form>
@@ -498,7 +502,7 @@ export function NewDeckDialog({
           <div>
             <DialogTitle id="new-deck-title">New deck or cube</DialogTitle>
             <p className="mt-1 text-sm text-base-content/60">
-              Start with a shell, then import or add cards from the catalog.
+              Create a decklist or a cube, then import or add cards from the catalog.
             </p>
           </div>
           <DialogClose onClose={close} />
