@@ -196,7 +196,7 @@ export function BulkEditCollectionItemsDialog({
               />
               <span>
                 <span className="block text-sm font-black uppercase tracking-[0.18em] text-accent">
-                  Purchase price
+                  Purchase price (EUR)
                 </span>
                 <span className="block text-xs leading-tight text-base-content/55">
                   Apply one purchase price to every selected item. Leave blank to clear it.
