@@ -82,7 +82,16 @@ export function PricingSection() {
   function syncNow() {
     void syncVendorPrices({
       variables: {},
-      onCompleted: () => showToast("Vendor price sync queued."),
+      onCompleted: (data) => {
+        const pricingSettings = data.syncVendorPrices?.pricingSettings
+        if (pricingSettings) {
+          client.writeQuery({
+            query: PricingSettingsDocument,
+            data: { pricingSettings },
+          })
+        }
+        showToast("Vendor price sync queued.")
+      },
       onError: (err) => showToast(errorMessage(err)),
     })
   }
