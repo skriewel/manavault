@@ -9,21 +9,35 @@ defmodule Manavault.Catalog.PriceFallbackConsistencyTest do
   alias Manavault.Catalog
   alias Manavault.Catalog.{CollectionItem, Price, Printing}
   alias Manavault.Pricing
-  alias Manavault.Pricing.{Store, Sync}
+  alias Manavault.Pricing.{Settings, Store, Sync}
   alias Manavault.Repo
 
   @finishes ~w(nonfoil foil etched)
 
   @prices_variants [
-    %{"usd" => "1.00", "usd_foil" => "2.00", "usd_etched" => "3.00"},
-    %{"usd" => "1.00", "usd_foil" => "2.00"},
-    %{"usd_foil" => "2.00"},
-    %{"usd_etched" => "3.00"},
-    %{"usd" => "1.00"},
+    %{
+      "eur" => "1.00",
+      "eur_foil" => "2.00",
+      "usd" => "1.25",
+      "usd_foil" => "2.50",
+      "usd_etched" => "3.75"
+    },
+    %{"eur" => "1.00", "eur_foil" => "2.00"},
+    %{"eur_foil" => "2.00"},
+    %{"usd_etched" => "3.75"},
+    %{"usd" => "1.25"},
     %{}
   ]
 
   test "SQL price fragment agrees with in-memory finish fallback for every finish" do
+    assert {:ok, _settings} =
+             Pricing.settings()
+             |> Settings.exchange_rate_changeset(%{
+               usd_per_eur: 1.25,
+               fx_rate_date: ~D[2026-09-01]
+             })
+             |> Repo.update()
+
     cards =
       @prices_variants
       |> Enum.with_index(1)
@@ -87,7 +101,7 @@ defmodule Manavault.Catalog.PriceFallbackConsistencyTest do
       "lang" => "en",
       "rarity" => "rare",
       "finishes" => @finishes,
-      "prices" => %{"usd" => "1.00", "usd_foil" => "2.00", "usd_etched" => "3.00"},
+      "prices" => %{"eur" => "1.00", "eur_foil" => "2.00"},
       "released_at" => "2026-01-01"
     }
 
@@ -112,8 +126,8 @@ defmodule Manavault.Catalog.PriceFallbackConsistencyTest do
     assert {:ok, %{source: "tcgplayer"}} = Pricing.set_source("tcgplayer")
     start_supervised!(Store)
 
-    assert ["etched", "foil"] == collection_item_finishes("usd>=15")
-    assert ["nonfoil"] == collection_item_finishes("usd<15")
+    assert ["etched", "foil"] == collection_item_finishes("eur>=15")
+    assert ["nonfoil"] == collection_item_finishes("eur<15")
   end
 
   test "collection price sorting uses the selected vendor's current price" do
@@ -252,7 +266,7 @@ defmodule Manavault.Catalog.PriceFallbackConsistencyTest do
       "lang" => "en",
       "rarity" => "rare",
       "finishes" => ["nonfoil"],
-      "prices" => %{"usd" => scryfall_price},
+      "prices" => %{"eur" => scryfall_price},
       "released_at" => "2026-01-01"
     }
   end
