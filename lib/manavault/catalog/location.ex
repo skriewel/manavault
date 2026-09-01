@@ -22,7 +22,7 @@ defmodule Manavault.Catalog.Location do
     timestamps(type: :utc_datetime)
   end
 
-  @kinds ~w(box binder deck_box list folder other)
+  @kinds ~w(box binder deck_box tuck_box sealed_product list folder other)
 
   def changeset(location, attrs) do
     location

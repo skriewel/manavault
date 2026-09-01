@@ -85,7 +85,16 @@ export const TYPE_OPTIONS = [
   "Kindred",
 ]
 
-export const LOCATION_KINDS = ["box", "binder", "deck_box", "list", "folder", "other"] as const
+export const LOCATION_KINDS = [
+  "box",
+  "binder",
+  "deck_box",
+  "tuck_box",
+  "sealed_product",
+  "list",
+  "folder",
+  "other",
+] as const
 export const COLLECTION_CONDITIONS = [
   "near_mint",
   "lightly_played",
