@@ -188,19 +188,7 @@ defmodule ManavaultWeb.DeckSharePreview do
   defp compact_number(value) when is_integer(value), do: Integer.to_string(value)
   defp compact_number(_value), do: "0"
 
-  defp format_price_cents(nil), do: nil
-
-  defp format_price_cents(cents) when is_integer(cents) do
-    dollars = div(cents, 100)
-    remainder = rem(cents, 100)
-
-    if remainder == 0 do
-      "$#{dollars}"
-    else
-      "$#{dollars}.#{remainder |> Integer.to_string() |> String.pad_leading(2, "0")}"
-    end
-  end
-
+  defp format_price_cents(cents) when is_integer(cents), do: Price.format_cents(cents)
   defp format_price_cents(_value), do: nil
 
   defp compact_decimal(value) do

@@ -1,5 +1,5 @@
 import { useApolloClient, useMutation, useQuery } from "@apollo/client/react"
-import { Check, CircleDollarSign, RefreshCw } from "lucide-react"
+import { Check, Euro, RefreshCw } from "lucide-react"
 import { useState } from "react"
 import { PageSection } from "../../components/app-shell"
 import { Button } from "../../components/ui/button"
@@ -17,6 +17,10 @@ const sourceLabels: Record<string, { label: string; description: string }> = {
   scryfall: {
     label: "Scryfall",
     description: "Prices bundled with the Scryfall catalog import. Updated with catalog syncs.",
+  },
+  cardmarket: {
+    label: "Cardmarket",
+    description: "EUR trend prices from Cardmarket's public Magic price guide. Updated daily.",
   },
   tcgplayer: {
     label: "TCGplayer",
@@ -78,7 +82,16 @@ export function PricingSection() {
   function syncNow() {
     void syncVendorPrices({
       variables: {},
-      onCompleted: () => showToast("Vendor price sync queued."),
+      onCompleted: (data) => {
+        const pricingSettings = data.syncVendorPrices?.pricingSettings
+        if (pricingSettings) {
+          client.writeQuery({
+            query: PricingSettingsDocument,
+            data: { pricingSettings },
+          })
+        }
+        showToast("Vendor price sync queued.")
+      },
       onError: (err) => showToast(errorMessage(err)),
     })
   }
@@ -92,12 +105,12 @@ export function PricingSection() {
       <div className="card border border-base-300 bg-base-100 shadow-sm">
         <div className="card-body gap-4 p-6">
           <div className="flex items-center gap-3">
-            <CircleDollarSign className="h-6 w-6 text-primary" />
+            <Euro className="h-6 w-6 text-primary" />
             <div>
               <h2 className="text-2xl font-black tracking-normal">Price source</h2>
               <p className="mt-1 text-sm text-base-content/60">
-                Choose where card prices come from. Vendor sources fall back to Scryfall for
-                printings they don't stock.
+                Choose where card prices come from. ManaVault values the collection in EUR.
+                USD-only vendor feeds are converted with the latest stored ECB reference rate.
               </p>
             </div>
           </div>
@@ -105,6 +118,15 @@ export function PricingSection() {
           {settingsQuery.error ? (
             <p className="text-sm text-error">{errorMessage(settingsQuery.error)}</p>
           ) : null}
+
+          <div className="rounded-box border border-base-300 bg-base-200/40 px-4 py-3 text-sm">
+            <div className="font-bold">Currency: {settings?.currency ?? "EUR"}</div>
+            <div className="mt-1 text-base-content/60">
+              {settings?.usdPerEur
+                ? `ECB: 1 EUR = ${settings.usdPerEur.toFixed(4)} USD${settings.fxRateDate ? ` · ${settings.fxRateDate}` : ""}`
+                : "ECB USD/EUR rate will be fetched when vendor prices are synced."}
+            </div>
+          </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             {(settings?.sources ?? []).map((source) => {

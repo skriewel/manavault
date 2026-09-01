@@ -14,7 +14,7 @@ const solRing = {
   quantity: 4,
   finish: "nonfoil",
   currentPriceCents: 125,
-  priceText: "$1.25",
+  priceText: "€1.25",
   printing: {
     setCode: "CMM",
     collectorNumber: "411",
@@ -34,7 +34,7 @@ test("sellListTextForSelections exports selected quantity totals", () => {
   assert.equal(sellListTotalCents(selections), 250)
   assert.equal(
     sellListTextForSelections(selections),
-    "2 Sol Ring [CMM #411] nonfoil - $1.25 ea - $2.50\n\nTotal: $2.50",
+    "2 Sol Ring [CMM #411] nonfoil - €1.25 ea - €2.50\n\nTotal: €2.50",
   )
 })
 

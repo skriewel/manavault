@@ -88,6 +88,7 @@ defmodule Manavault.Catalog.Scryfall.ImportRows do
         image_uris: encode_json(image_uris(card)),
         prices: encode_json(card["prices"] || %{}),
         released_at: parse_date(card["released_at"]),
+        cardmarket_id: normalize_cardmarket_id(card["cardmarket_id"]),
         inserted_at: now,
         updated_at: now
       }
@@ -185,6 +186,17 @@ defmodule Manavault.Catalog.Scryfall.ImportRows do
   end
 
   defp image_uris(_card), do: %{}
+
+  defp normalize_cardmarket_id(id) when is_integer(id), do: id
+
+  defp normalize_cardmarket_id(id) when is_binary(id) do
+    case Integer.parse(id) do
+      {value, ""} -> value
+      _invalid -> nil
+    end
+  end
+
+  defp normalize_cardmarket_id(_id), do: nil
 
   defp encode_json(value), do: Jason.encode!(value)
 

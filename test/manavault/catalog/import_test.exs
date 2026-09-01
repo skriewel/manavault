@@ -10,7 +10,9 @@ defmodule Manavault.Catalog.ImportTest do
   }
 
   test "import_cards stores identities and printings and safely updates on rerun" do
-    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+    lotus = Map.put(@black_lotus, "cardmarket_id", 12_345)
+
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([lotus])
 
     assert %Card{
              name: "Black Lotus",
@@ -25,7 +27,8 @@ defmodule Manavault.Catalog.ImportTest do
              oracle_id: "oracle-1",
              set_code: "lea",
              collector_number: "232",
-             released_at: ~D[1993-08-05]
+             released_at: ~D[1993-08-05],
+             cardmarket_id: 12_345
            } = Catalog.get_printing_by_scryfall_id("scryfall-printing-1")
 
     assert %Printing{scryfall_id: "scryfall-printing-1"} = Catalog.get_printing("LEA", "232")
@@ -41,7 +44,11 @@ defmodule Manavault.Catalog.ImportTest do
     assert [%{set_code: "lea", set_name: "Limited Edition Alpha"}] = Catalog.search_sets("alpha")
 
     assert {:ok, %{cards_count: 1, printings_count: 1}} =
-             Catalog.import_cards([Map.put(@renamed_lotus, "game_changer", true)])
+             Catalog.import_cards([
+               @renamed_lotus
+               |> Map.put("game_changer", true)
+               |> Map.put("cardmarket_id", 12_345)
+             ])
 
     assert Repo.aggregate(Card, :count) == 1
     assert Repo.aggregate(Printing, :count) == 1
@@ -53,7 +60,7 @@ defmodule Manavault.Catalog.ImportTest do
            } = Repo.get!(Card, "oracle-1")
 
     assert %Printing{prices: prices} = Repo.get!(Printing, "scryfall-printing-1")
-    assert Jason.decode!(prices) == %{"usd" => "1.00"}
+    assert Jason.decode!(prices) == %{"usd" => "1.00", "eur" => "1.00"}
   end
 
   test "import_cards excludes memorabilia and token set printings" do

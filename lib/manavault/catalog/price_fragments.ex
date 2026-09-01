@@ -2,21 +2,16 @@ defmodule Manavault.Catalog.PriceFragments do
   @moduledoc """
   Shared Ecto `fragment/1` macros for current collection-item prices.
 
-  Import the specific macros you need into a module that also imports
-  `Ecto.Query` (the emitted `fragment/…` and composed macro calls resolve in the
-  caller's context). Macros that build on others (`price_cents_fragment`, the
-  `*_total_cents_fragment`s) require the whole chain to be imported alongside
-  them.
-
-  The finish-to-key fallback ordering is compiled in from
-  `Manavault.Catalog.Price.usd_fallback_keys/1`, keeping the SQL and
-  in-memory pricing paths on one authoritative ordering.
+  Vendor prices are stored as EUR cents. Scryfall pricing prefers native EUR
+  fields and falls back to USD converted with the latest stored ECB USD/EUR
+  reference rate.
   """
 
   alias Manavault.Catalog.Price
 
-  coalesce_sql = fn keys ->
-    "COALESCE(" <> Enum.map_join(keys, ", ", &"json_extract(?, '$.#{&1}')") <> ")"
+  coalesce_sql = fn
+    [key] -> "json_extract(?, '$.#{key}')"
+    keys -> "COALESCE(" <> Enum.map_join(keys, ", ", &"json_extract(?, '$.#{&1}')") <> ")"
   end
 
   vendor_order_sql = fn finishes ->
@@ -30,13 +25,23 @@ defmodule Manavault.Catalog.PriceFragments do
     "CASE vendor_price.finish #{cases} ELSE #{length(finishes) + 1} END"
   end
 
-  @foil_keys Price.usd_fallback_keys("foil")
-  @etched_keys Price.usd_fallback_keys("etched")
-  @default_keys Price.usd_fallback_keys(nil)
+  @foil_eur_keys Price.eur_fallback_keys("foil")
+  @etched_eur_keys Price.eur_fallback_keys("etched")
+  @default_eur_keys Price.eur_fallback_keys(nil)
+
+  @foil_usd_keys Price.usd_fallback_keys("foil")
+  @etched_usd_keys Price.usd_fallback_keys("etched")
+  @default_usd_keys Price.usd_fallback_keys(nil)
 
   @foil_vendor_order vendor_order_sql.(Price.finish_fallbacks("foil"))
   @etched_vendor_order vendor_order_sql.(Price.finish_fallbacks("etched"))
   @default_vendor_order vendor_order_sql.(Price.finish_fallbacks(nil))
+
+  @fx_rate_sql """
+  SELECT pricing_setting.usd_per_eur
+  FROM pricing_settings AS pricing_setting
+  WHERE pricing_setting.id = 1
+  """
 
   @vendor_price_sql """
   SELECT vendor_price.price_cents / 100.0
@@ -60,17 +65,30 @@ defmodule Manavault.Catalog.PriceFragments do
   @finish_case_sql """
   COALESCE(
     (#{@vendor_price_sql}),
-    CAST(COALESCE(NULLIF(
+    CAST(NULLIF(
       CASE ?
-        WHEN 'foil' THEN #{coalesce_sql.(@foil_keys)}
-        WHEN 'etched' THEN #{coalesce_sql.(@etched_keys)}
-        ELSE #{coalesce_sql.(@default_keys)}
+        WHEN 'foil' THEN #{coalesce_sql.(@foil_eur_keys)}
+        WHEN 'etched' THEN #{coalesce_sql.(@etched_eur_keys)}
+        ELSE #{coalesce_sql.(@default_eur_keys)}
       END,
       ''
-    ), '0') AS REAL)
+    ) AS REAL),
+    CAST(NULLIF(
+      CASE ?
+        WHEN 'foil' THEN #{coalesce_sql.(@foil_usd_keys)}
+        WHEN 'etched' THEN #{coalesce_sql.(@etched_usd_keys)}
+        ELSE #{coalesce_sql.(@default_usd_keys)}
+      END,
+      ''
+    ) AS REAL) / NULLIF((#{@fx_rate_sql}), 0),
+    0
   )
   """
-  @finish_case_prices_count length(@foil_keys) + length(@etched_keys) + length(@default_keys)
+
+  @finish_case_eur_prices_count length(@foil_eur_keys) + length(@etched_eur_keys) +
+                                  length(@default_eur_keys)
+  @finish_case_usd_prices_count length(@foil_usd_keys) + length(@etched_usd_keys) +
+                                  length(@default_usd_keys)
 
   @default_price_sql """
   COALESCE(
@@ -87,17 +105,28 @@ defmodule Manavault.Catalog.PriceFragments do
       ORDER BY #{@default_vendor_order}
       LIMIT 1
     ),
-    CAST(COALESCE(NULLIF(
-      #{coalesce_sql.(@default_keys)},
+    CAST(NULLIF(
+      #{coalesce_sql.(@default_eur_keys)},
       ''
-    ), '0') AS REAL)
+    ) AS REAL),
+    CAST(NULLIF(
+      #{coalesce_sql.(@default_usd_keys)},
+      ''
+    ) AS REAL) / NULLIF((#{@fx_rate_sql}), 0),
+    0
   )
   """
-  @default_price_prices_count length(@default_keys)
 
-  @doc "Finish-aware current USD price (as REAL) for an item's printing."
+  @default_eur_prices_count length(@default_eur_keys)
+  @default_usd_prices_count length(@default_usd_keys)
+
+  @doc "Finish-aware current EUR price (as REAL) for an item's printing."
   defmacro price_value_fragment(item, printing) do
-    prices = List.duplicate(quote(do: unquote(printing).prices), @finish_case_prices_count)
+    eur_prices =
+      List.duplicate(quote(do: unquote(printing).prices), @finish_case_eur_prices_count)
+
+    usd_prices =
+      List.duplicate(quote(do: unquote(printing).prices), @finish_case_usd_prices_count)
 
     quote do
       fragment(
@@ -108,13 +137,15 @@ defmodule Manavault.Catalog.PriceFragments do
           unquote(printing).scryfall_id,
           unquote(item).finish,
           unquote(item).finish,
-          unquote_splicing(prices)
+          unquote_splicing(eur_prices),
+          unquote(item).finish,
+          unquote_splicing(usd_prices)
         )
       )
     end
   end
 
-  @doc "Finish-aware price in integer cents."
+  @doc "Finish-aware price in integer EUR cents."
   defmacro price_cents_fragment(item, printing) do
     quote do
       fragment(
@@ -124,7 +155,7 @@ defmodule Manavault.Catalog.PriceFragments do
     end
   end
 
-  @doc "Current price minus purchase basis in integer cents."
+  @doc "Current price minus purchase basis in integer EUR cents."
   defmacro value_gain_cents_fragment(item, printing) do
     quote do
       fragment(
@@ -137,7 +168,7 @@ defmodule Manavault.Catalog.PriceFragments do
     end
   end
 
-  @doc "SUM of quantity * current price cents across grouped rows."
+  @doc "SUM of quantity * current EUR price cents across grouped rows."
   defmacro current_total_cents_fragment(item, printing) do
     quote do
       fragment(
@@ -161,15 +192,20 @@ defmodule Manavault.Catalog.PriceFragments do
     end
   end
 
-  @doc "Finish-agnostic USD price (as REAL), in the default fallback order."
+  @doc "Finish-agnostic EUR price (as REAL), in the default fallback order."
   defmacro price_fragment(printing) do
-    prices = List.duplicate(quote(do: unquote(printing).prices), @default_price_prices_count)
+    eur_prices =
+      List.duplicate(quote(do: unquote(printing).prices), @default_eur_prices_count)
+
+    usd_prices =
+      List.duplicate(quote(do: unquote(printing).prices), @default_usd_prices_count)
 
     quote do
       fragment(
         unquote(@default_price_sql),
         unquote(printing).scryfall_id,
-        unquote_splicing(prices)
+        unquote_splicing(eur_prices),
+        unquote_splicing(usd_prices)
       )
     end
   end

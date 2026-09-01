@@ -20,15 +20,23 @@ export function centsToCurrencyInput(cents?: number | null) {
 }
 
 export function parseCurrencyInputCents(value: string) {
-  const normalized = value.trim().replaceAll(",", "").replace(/^\$/, "")
+  let normalized = value.trim().replace(/[€$\s]/g, "")
   if (!normalized) return null
+
+  if (/^\d{1,3}(?:\.\d{3})+,\d{1,2}$/.test(normalized)) {
+    normalized = normalized.replaceAll(".", "").replace(",", ".")
+  } else if (/^\d+,\d{1,2}$/.test(normalized)) {
+    normalized = normalized.replace(",", ".")
+  } else {
+    normalized = normalized.replaceAll(",", "")
+  }
 
   const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(normalized)
   if (!match) return undefined
 
-  const dollars = Number(match[1])
+  const euros = Number(match[1])
   const cents = Number((match[2] || "").padEnd(2, "0"))
-  return dollars * 100 + cents
+  return euros * 100 + cents
 }
 
 export function printingSetLabel(printing: LocationCoverSelection) {

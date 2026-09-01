@@ -197,6 +197,7 @@ defmodule Manavault.Catalog.Scryfall.Import do
            :image_uris,
            :prices,
            :released_at,
+           :cardmarket_id,
            :updated_at
          ]}
     )

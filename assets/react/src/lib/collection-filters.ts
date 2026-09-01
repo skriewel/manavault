@@ -86,7 +86,7 @@ export function buildCollectionFilterQuery(filters: CollectionFilterState) {
     filters.allocation === "any" ? "" : `is:${filters.allocation}`,
     filters.proxy === "any" ? "" : filters.proxy === "proxy" ? "is:proxy" : "is!=proxy",
     comparisonPredicate("qty", filters.quantityOperator, filters.quantity),
-    comparisonPredicate("usd", filters.priceOperator, filters.priceUsd),
+    comparisonPredicate("eur", filters.priceOperator, filters.priceUsd),
     comparisonPredicate("date", filters.dateOperator, filters.releasedDate),
     comparisonPredicate("year", filters.yearOperator, filters.releasedYear),
   ].filter(Boolean)

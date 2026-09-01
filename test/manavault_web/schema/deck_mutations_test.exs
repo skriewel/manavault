@@ -5,8 +5,11 @@ defmodule ManavaultWeb.Schema.DeckMutationsTest do
   alias Manavault.Catalog
 
   test "create and update deck mutations decode physical location relay IDs", %{conn: conn} do
-    assert {:ok, first_box} = Catalog.create_location(%{"name" => "First Deck Box", "kind" => "deck_box"})
-    assert {:ok, second_box} = Catalog.create_location(%{"name" => "Second Deck Box", "kind" => "deck_box"})
+    assert {:ok, first_box} =
+             Catalog.create_location(%{"name" => "First Deck Box", "kind" => "deck_box"})
+
+    assert {:ok, second_box} =
+             Catalog.create_location(%{"name" => "Second Deck Box", "kind" => "deck_box"})
 
     create_conn =
       post(conn, "/api/graphql", %{
@@ -298,7 +301,7 @@ defmodule ManavaultWeb.Schema.DeckMutationsTest do
           "lang" => "en",
           "image_uris" => %{},
           "finishes" => ["nonfoil"],
-          "prices" => %{"usd" => "3.50"},
+          "prices" => %{"eur" => "3.50"},
           "legalities" => %{}
         }
       ])
@@ -351,8 +354,8 @@ defmodule ManavaultWeb.Schema.DeckMutationsTest do
                    "setCode" => "buy",
                    "collectorNumber" => "7",
                    "language" => "en",
-                   "unitPriceText" => "$3.50",
-                   "totalPriceText" => "$7"
+                   "unitPriceText" => "€3.50",
+                   "totalPriceText" => "€7"
                  }
                ],
                "deckBuylistExport" => export_csv
@@ -362,7 +365,7 @@ defmodule ManavaultWeb.Schema.DeckMutationsTest do
     assert export_csv =~
              "Quantity,Card,Set,Collector Number,Finish,Language,Reason,Unit Price,Total Price"
 
-    assert export_csv =~ "2,Buylist Lotus,buy,7,nonfoil,en,missing,$3.50,$7"
+    assert export_csv =~ "2,Buylist Lotus,buy,7,nonfoil,en,missing,€3.50,€7"
   end
 
   test "deck disassembly mutations preview and apply allocated card moves", %{conn: conn} do

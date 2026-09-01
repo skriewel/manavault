@@ -20,9 +20,15 @@ defmodule ManavaultWeb.Schema.PricingResolvers do
   end
 
   defp serialize_settings do
+    fx = Pricing.exchange_rate()
+
     %{
       source: Pricing.settings().source,
       sources: Pricing.sources(),
+      currency: "EUR",
+      usd_per_eur: fx.usd_per_eur,
+      fx_rate_date: if(fx.date, do: Date.to_iso8601(fx.date), else: nil),
+      fx_source: fx.source,
       vendors:
         Enum.map(Pricing.vendor_statuses(), fn status ->
           Map.update!(status, :last_synced_at, fn

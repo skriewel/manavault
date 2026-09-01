@@ -381,7 +381,7 @@ export function ImportCollectionDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="per_card">Price per card</SelectItem>
-                    <SelectItem value="total_spend">Total amount spent</SelectItem>
+                    <SelectItem value="total_spend">Total amount spent (EUR)</SelectItem>
                   </SelectContent>
                 </Select>
               </label>
@@ -389,8 +389,8 @@ export function ImportCollectionDialog({
               <label className="block space-y-2">
                 <span className="text-xs font-black uppercase tracking-[0.18em] text-accent">
                   {purchaseMode === "total_spend"
-                    ? "Total amount spent"
-                    : "Purchase price per card"}
+                    ? "Total amount spent (EUR)"
+                    : "Purchase price per card (EUR)"}
                 </span>
                 <input
                   type="text"
@@ -398,7 +398,7 @@ export function ImportCollectionDialog({
                   className="input input-bordered w-full bg-base-100"
                   value={purchasePrice}
                   onChange={(event) => updatePurchasePrice(event.target.value)}
-                  placeholder={purchaseMode === "total_spend" ? "$439.00" : "$1.00"}
+                  placeholder={purchaseMode === "total_spend" ? "€439.00" : "€1.00"}
                 />
                 <p className="text-sm text-base-content/55">
                   {purchaseMode === "total_spend"
@@ -646,13 +646,13 @@ function ImportSpendSummary({
 
 function purchaseAmountError(mode: CollectionImportPurchaseMode) {
   return mode === "total_spend"
-    ? "Total amount spent must be a dollar amount"
-    : "Purchase price must be a dollar amount"
+    ? "Total amount spent must be a euro amount"
+    : "Purchase price must be a euro amount"
 }
 
 function importPurchasePriceText(cents?: number | null) {
   if (typeof cents !== "number" || !Number.isFinite(cents)) return "-"
-  return `$${centsToCurrencyInput(cents)}`
+  return `€${centsToCurrencyInput(cents)}`
 }
 
 export function ExportCollectionDialog({

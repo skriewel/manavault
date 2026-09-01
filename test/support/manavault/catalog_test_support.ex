@@ -24,7 +24,7 @@ defmodule Manavault.CatalogTestSupport do
       "rarity" => "rare",
       "finishes" => ["nonfoil"],
       "image_uris" => %{"normal" => "https://example.test/black-lotus.jpg"},
-      "prices" => %{"usd" => "100000.00"},
+      "prices" => %{"usd" => "100000.00", "eur" => "100000.00"},
       "released_at" => "1993-08-05",
       "rulings_uri" => "https://api.scryfall.com/cards/oracle-1/rulings"
     }
@@ -34,7 +34,7 @@ defmodule Manavault.CatalogTestSupport do
     %{
       black_lotus()
       | "name" => "Black Lotus Updated",
-        "prices" => %{"usd" => "1.00"},
+        "prices" => %{"usd" => "1.00", "eur" => "1.00"},
         "rulings_uri" => "https://api.scryfall.com/cards/oracle-1/rulings-updated"
     }
   end
@@ -67,7 +67,7 @@ defmodule Manavault.CatalogTestSupport do
       "lang" => "ja",
       "rarity" => "rare",
       "finishes" => ["foil"],
-      "prices" => %{"usd_foil" => "5.00"},
+      "prices" => %{"usd_foil" => "5.00", "eur_foil" => "5.00"},
       "released_at" => "1993-08-05"
     }
   end

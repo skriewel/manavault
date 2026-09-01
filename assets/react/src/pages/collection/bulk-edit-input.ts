@@ -31,7 +31,7 @@ export function buildBulkCollectionItemUpdateInput(
     const purchasePriceCents = parseCurrencyInputCents(fields.purchasePrice)
 
     if (purchasePriceCents === undefined) {
-      return { ok: false, error: "Purchase price must be a dollar amount" }
+      return { ok: false, error: "Purchase price must be a euro amount" }
     }
 
     input.purchasePriceCents = purchasePriceCents

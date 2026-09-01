@@ -7,6 +7,8 @@ defmodule Manavault.Catalog.Search.Cards do
   alias Manavault.Catalog.Search.Cards.Filter
   alias Manavault.Repo
 
+  import Manavault.Catalog.PriceFragments, only: [price_fragment: 1]
+
   @default_sort %{field: "name", direction: "asc"}
   @sort_fields ~w(name mana_value color type released rarity price)
   @sort_directions ~w(asc desc)
@@ -150,28 +152,14 @@ defmodule Manavault.Catalog.Search.Cards do
 
       {"price", "desc"} ->
         order_by(query, [card, printing],
-          desc:
-            max(
-              fragment(
-                "COALESCE(CAST(?->>'usd' AS REAL), CAST(?->>'usd_foil' AS REAL))",
-                printing.prices,
-                printing.prices
-              )
-            ),
+          desc: max(price_fragment(printing)),
           asc: card.name,
           asc: card.oracle_id
         )
 
       {"price", _direction} ->
         order_by(query, [card, printing],
-          asc:
-            min(
-              fragment(
-                "COALESCE(CAST(?->>'usd' AS REAL), CAST(?->>'usd_foil' AS REAL))",
-                printing.prices,
-                printing.prices
-              )
-            ),
+          asc: min(price_fragment(printing)),
           asc: card.name,
           asc: card.oracle_id
         )

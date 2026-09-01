@@ -342,13 +342,13 @@ test("price grouping buckets cards by per-card price", () => {
   assert.deepEqual(
     groups.map((group) => ({ key: group.key, label: group.label, quantity: group.quantity })),
     [
-      { key: "under-1", label: "<$1", quantity: 3 },
-      { key: "1-3", label: "$1–$3", quantity: 1 },
-      { key: "3-5", label: "$3–$5", quantity: 1 },
-      { key: "5-10", label: "$5–$10", quantity: 1 },
-      { key: "10-25", label: "$10–$25", quantity: 1 },
-      { key: "25-50", label: "$25–$50", quantity: 1 },
-      { key: "50-plus", label: "$50+", quantity: 1 },
+      { key: "under-1", label: "<€1", quantity: 3 },
+      { key: "1-3", label: "€1–€3", quantity: 1 },
+      { key: "3-5", label: "€3–€5", quantity: 1 },
+      { key: "5-10", label: "€5–€10", quantity: 1 },
+      { key: "10-25", label: "€10–€25", quantity: 1 },
+      { key: "25-50", label: "€25–€50", quantity: 1 },
+      { key: "50-plus", label: "€50+", quantity: 1 },
       { key: "unpriced", label: "Unpriced", quantity: 1 },
     ],
   )

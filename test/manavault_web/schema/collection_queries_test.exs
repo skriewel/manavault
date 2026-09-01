@@ -23,7 +23,7 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
             "art_crop" => "https://example.test/card-art.jpg"
           },
           "finishes" => ["nonfoil"],
-          "prices" => %{"usd" => "12.34"},
+          "prices" => %{"eur" => "12.34"},
           "legalities" => %{}
         }
       ])
@@ -124,11 +124,11 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
                          "imageUrl" => "https://example.test/card.jpg"
                        },
                        "itemCount" => 3,
-                       "totalPriceText" => "$37.02",
+                       "totalPriceText" => "€37.02",
                        "valueSummary" => %{
-                         "totalPriceText" => "$37.02",
-                         "purchasePriceText" => "$37.02",
-                         "valueGainText" => "$0",
+                         "totalPriceText" => "€37.02",
+                         "purchasePriceText" => "€37.02",
+                         "valueGainText" => "€0",
                          "valueGainPercentText" => "0%"
                        }
                      }
@@ -140,11 +140,11 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
                        "kind" => "unfiled",
                        "coverPrinting" => nil,
                        "itemCount" => 0,
-                       "totalPriceText" => "$0",
+                       "totalPriceText" => "€0",
                        "valueSummary" => %{
-                         "totalPriceText" => "$0",
-                         "purchasePriceText" => "$0",
-                         "valueGainText" => "$0",
+                         "totalPriceText" => "€0",
+                         "purchasePriceText" => "€0",
+                         "valueGainText" => "€0",
                          "valueGainPercentText" => nil
                        }
                      }
@@ -153,9 +153,9 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
                },
                "collectionItemCount" => 3,
                "collectionValueSummary" => %{
-                 "totalPriceText" => "$37.02",
-                 "purchasePriceText" => "$37.02",
-                 "valueGainText" => "$0",
+                 "totalPriceText" => "€37.02",
+                 "purchasePriceText" => "€37.02",
+                 "valueGainText" => "€0",
                  "valueGainPercentText" => "0%"
                },
                "collectionValueDashboard" => %{
@@ -165,9 +165,9 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
                  "lossPositionCount" => 0,
                  "unchangedPositionCount" => 1,
                  "summary" => %{
-                   "totalPriceText" => "$37.02",
-                   "purchasePriceText" => "$37.02",
-                   "valueGainText" => "$0"
+                   "totalPriceText" => "€37.02",
+                   "purchasePriceText" => "€37.02",
+                   "valueGainText" => "€0"
                  },
                  "biggestGains" => [],
                  "biggestLosses" => []
@@ -179,9 +179,9 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
                      "node" => %{
                        "allocatedQuantity" => 0,
                        "location" => %{"name" => "Binder"},
-                       "priceText" => "$12.34",
-                       "purchasePriceText" => "$12.34",
-                       "valueGainText" => "$0",
+                       "priceText" => "€12.34",
+                       "purchasePriceText" => "€12.34",
+                       "valueGainText" => "€0",
                        "valueGainPercentText" => "0%",
                        "printing" => %{
                          "card" => %{"name" => "Test Card"},
@@ -212,7 +212,7 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
                  "rarity" => "rare",
                  "image_uris" => %{},
                  "finishes" => ["nonfoil"],
-                 "prices" => %{"usd" => "10.00"},
+                 "prices" => %{"eur" => "10.00"},
                  "legalities" => %{}
                }
              ])
@@ -303,7 +303,7 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
             "lang" => "en",
             "rarity" => "rare",
             "image_uris" => %{},
-            "prices" => %{"usd" => "1.00"},
+            "prices" => %{"eur" => "1.00"},
             "finishes" => ["nonfoil"],
             "released_at" => "1993-08-05",
             "legalities" => %{}
@@ -319,7 +319,7 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
             "lang" => "en",
             "rarity" => "rare",
             "image_uris" => %{},
-            "prices" => %{"usd" => "2.00"},
+            "prices" => %{"eur" => "2.00"},
             "finishes" => ["nonfoil"],
             "released_at" => "1994-08-05",
             "legalities" => %{}
@@ -504,7 +504,7 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
           "lang" => "en",
           "rarity" => "common",
           "image_uris" => %{},
-          "prices" => %{"usd" => "0.50"},
+          "prices" => %{"eur" => "0.50"},
           "finishes" => ["nonfoil"],
           "legalities" => %{}
         }
@@ -565,7 +565,7 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
                  "name" => "Unfiled",
                  "kind" => "unfiled",
                  "itemCount" => 4,
-                 "totalPriceText" => "$2",
+                 "totalPriceText" => "€2",
                  "collectionItems" => %{
                    "pageInfo" => %{"endCursor" => _, "hasNextPage" => false},
                    "edges" => [
@@ -609,7 +609,7 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
           "lang" => "en",
           "rarity" => "common",
           "image_uris" => %{},
-          "prices" => %{"usd" => "1.00"},
+          "prices" => %{"eur" => "1.00"},
           "finishes" => ["nonfoil"],
           "legalities" => %{}
         },
@@ -624,7 +624,7 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
           "lang" => "en",
           "rarity" => "common",
           "image_uris" => %{},
-          "prices" => %{"usd" => "2.00"},
+          "prices" => %{"eur" => "2.00"},
           "finishes" => ["nonfoil"],
           "legalities" => %{}
         }
@@ -693,7 +693,7 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
           "lang" => "en",
           "rarity" => "rare",
           "image_uris" => %{},
-          "prices" => %{"usd" => "10.00"},
+          "prices" => %{"eur" => "10.00"},
           "finishes" => ["nonfoil"],
           "legalities" => %{}
         },
@@ -708,7 +708,7 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
           "lang" => "en",
           "rarity" => "common",
           "image_uris" => %{},
-          "prices" => %{"usd" => "0.50"},
+          "prices" => %{"eur" => "0.50"},
           "finishes" => ["nonfoil"],
           "legalities" => %{}
         }
@@ -749,16 +749,16 @@ defmodule ManavaultWeb.Schema.CollectionQueriesTest do
     assert %{
              "data" => %{
                "collectionValueSummary" => %{
-                 "totalPriceText" => "$22",
-                 "purchasePriceText" => "$22"
+                 "totalPriceText" => "€22",
+                 "purchasePriceText" => "€22"
                },
                "unfiledValueSummary" => %{
-                 "totalPriceText" => "$2",
-                 "purchasePriceText" => "$2"
+                 "totalPriceText" => "€2",
+                 "purchasePriceText" => "€2"
                },
                "searchedValueSummary" => %{
-                 "totalPriceText" => "$20",
-                 "purchasePriceText" => "$20"
+                 "totalPriceText" => "€20",
+                 "purchasePriceText" => "€20"
                }
              }
            } = json_response(conn, 200)

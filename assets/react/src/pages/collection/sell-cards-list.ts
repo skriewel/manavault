@@ -42,7 +42,7 @@ export function sellListTextForSelections<T extends SellListCollectionItem>(
     const cardName = item.printing?.card?.name || "Unknown card"
     const setCode = item.printing?.setCode?.toUpperCase() || "?"
     const collectorNumber = item.printing?.collectorNumber || "?"
-    const unitPrice = item.priceText || "$0"
+    const unitPrice = item.priceText || "€0"
     const total = formatCents((item.currentPriceCents || 0) * quantity)
 
     return `${quantity} ${cardName} [${setCode} #${collectorNumber}] ${item.finish} - ${unitPrice} ea - ${total}`
@@ -98,7 +98,7 @@ export function lineMatchesItem(line: string, item: SellListCollectionItem) {
 
 export function formatCents(cents: number) {
   return new Intl.NumberFormat("en-US", {
-    currency: "USD",
+    currency: "EUR",
     maximumFractionDigits: cents % 100 === 0 ? 0 : 2,
     minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
     style: "currency",

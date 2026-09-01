@@ -120,11 +120,11 @@ test("form conversion preserves every validation message and rejects invalid ran
     ],
     [
       formRow("minimum", { name: "Minimum", minPrice: "5.678" }),
-      "Minimum: minimum price must be a dollar amount.",
+      "Minimum: minimum price must be a euro amount.",
     ],
     [
       formRow("maximum", { name: "Maximum", maxPrice: "USD 5" }),
-      "Maximum: maximum price must be a dollar amount.",
+      "Maximum: maximum price must be a euro amount.",
     ],
     [
       formRow("range", { name: "Range", minPrice: "5", maxPrice: "4.99" }),

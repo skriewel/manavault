@@ -75,6 +75,20 @@ Collection workflows include:
 - bulk selection for loaded or matching items, with add-to-deck, add-to-list,
   move, and delete flows
 
+## Pricing
+
+ManaVault values cards and recorded purchase prices in EUR.
+
+- Scryfall prices prefer native EUR values and use the latest stored ECB
+  USD/EUR reference rate only when a native EUR price is unavailable.
+- Cardmarket uses the public Magic price guide and joins its `idProduct` to
+  Scryfall printings through Scryfall's `cardmarket_id`. Collection valuation
+  uses Cardmarket trend prices.
+- TCGplayer, Card Kingdom, and ManaPool remain available as sources; their USD
+  feeds are converted to EUR during vendor-price sync.
+- Vendor prices are derived cache data and can be rebuilt at any time. The
+  selected source falls back to Scryfall for printings without a vendor price.
+
 ## Decks
 
 Decks model requested cards separately from owned collection items. A deck card

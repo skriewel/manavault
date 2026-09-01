@@ -5,7 +5,7 @@ defmodule Manavault.Catalog.DeckBuylistTest do
   alias Manavault.Catalog
 
   test "deck buylist distinguishes missing from owned unavailable and exports text and csv" do
-    cheap_lotus = %{@black_lotus_beta | "prices" => %{"usd" => "10.00"}}
+    cheap_lotus = %{@black_lotus_beta | "prices" => %{"eur" => "10.00"}}
 
     assert {:ok, %{cards_count: 2, printings_count: 2}} =
              Catalog.import_cards([@black_lotus, cheap_lotus])
@@ -108,7 +108,7 @@ defmodule Manavault.Catalog.DeckBuylistTest do
     assert csv =~
              "Quantity,Card,Set,Collector Number,Finish,Language,Reason,Unit Price,Total Price"
 
-    assert csv =~ "2,Black Lotus,leb,233,nonfoil,en,missing and unavailable,$10,$20"
+    assert csv =~ "2,Black Lotus,leb,233,nonfoil,en,missing and unavailable,€10,€20"
 
     assert [%{set_code: nil, collector_number: nil}] = Catalog.deck_buylist(target_deck)
     assert available_item.id

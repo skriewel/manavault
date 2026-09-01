@@ -2,8 +2,8 @@ defmodule Manavault.Pricing.Money do
   @moduledoc false
 
   @doc """
-  Converts a vendor price value (decimal dollar string, float, or integer
-  dollars) into non-negative integer cents. Returns `nil` for missing,
+  Converts a vendor price value (decimal currency string, float, or integer
+  units) into non-negative integer cents. Returns `nil` for missing,
   malformed, zero, or negative values.
   """
   def to_cents(nil), do: nil
@@ -33,6 +33,15 @@ defmodule Manavault.Pricing.Money do
   end
 
   def to_cents(_value), do: nil
+
+  def usd_cents_to_eur(nil, _usd_per_eur), do: nil
+
+  def usd_cents_to_eur(cents, usd_per_eur)
+      when is_integer(cents) and cents >= 0 and is_number(usd_per_eur) and usd_per_eur > 0 do
+    round(cents / usd_per_eur)
+  end
+
+  def usd_cents_to_eur(_cents, _usd_per_eur), do: nil
 
   defp positive_or_nil(cents) when is_integer(cents) and cents > 0, do: cents
   defp positive_or_nil(_cents), do: nil

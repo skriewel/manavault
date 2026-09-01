@@ -27,7 +27,7 @@ const RESULT = {
   unavailableQuantity: 1,
   missingQuantity: 1,
   estimatedCostCents: 2_500,
-  estimatedCostText: "$25",
+  estimatedCostText: "€25",
   unpricedQuantity: 0,
   unrecognized: ["Almost Sol Ring"],
   cards: [
@@ -44,9 +44,9 @@ const RESULT = {
       setCode: "leb",
       collectorNumber: "233",
       unitPriceCents: 1_250,
-      unitPriceText: "$12.50",
+      unitPriceText: "€12.50",
       totalPriceCents: 2_500,
-      totalPriceText: "$25",
+      totalPriceText: "€25",
       printing: {
         id: "printing-lotus",
         scryfallId: "scryfall-lotus",
@@ -99,7 +99,7 @@ test("checks a pasted list and surfaces actionable availability, cost, and recov
   })
 
   expect(await screen.findByText("Weekend brew")).not.toBeNull()
-  expect(screen.getAllByText("$25")).toHaveLength(2)
+  expect(screen.getAllByText("€25")).toHaveLength(2)
   expect(screen.getByText("1 in decks")).not.toBeNull()
   expect(screen.getByText("1 not owned")).not.toBeNull()
   expect(screen.getByText("Almost Sol Ring")).not.toBeNull()

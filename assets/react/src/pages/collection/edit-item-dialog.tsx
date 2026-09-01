@@ -120,7 +120,7 @@ export function EditCollectionItemDialog({
 
     const purchasePriceCents = parseCurrencyInputCents(purchasePrice)
     if (purchasePriceCents === undefined) {
-      setError("Purchase price must be a dollar amount")
+      setError("Purchase price must be a euro amount")
       return
     }
 
@@ -248,7 +248,7 @@ export function EditCollectionItemDialog({
             </label>
             <label className="block space-y-1.5">
               <span className="text-xs font-black uppercase tracking-[0.18em] text-accent">
-                Purchase price
+                Purchase price (EUR)
               </span>
               <Input
                 className="h-9 min-h-9"

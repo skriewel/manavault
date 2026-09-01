@@ -86,7 +86,7 @@ defmodule Manavault.Catalog.ScryfallQueryTest do
         ~s(name:"Black Lotus"),
         "type:legendary oracle:draw mana:{G} mv>=3",
         "c=2 id<=uw rarity>=rare set:tdc number>200 lang:ja",
-        "usd<10 year>=2020 date<2025-01-01",
+        "eur<10 year>=2020 date<2025-01-01",
         "is:foil -is:funny",
         "(dragon or angel) -type:creature",
         "(type:artifact rarity:rare) or (type:sorcery rarity:mythic)",

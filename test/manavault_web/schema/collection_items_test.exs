@@ -18,7 +18,7 @@ defmodule ManavaultWeb.Schema.CollectionItemsTest do
           "rarity" => "rare",
           "image_uris" => %{"normal" => "https://example.test/new-card.jpg"},
           "finishes" => ["nonfoil", "foil"],
-          "prices" => %{"usd" => "1.25", "usd_foil" => "3.50"},
+          "prices" => %{"eur" => "1.25", "eur_foil" => "3.50"},
           "legalities" => %{}
         }
       ])
@@ -76,8 +76,8 @@ defmodule ManavaultWeb.Schema.CollectionItemsTest do
                    "finish" => "foil",
                    "notes" => "Fresh pull",
                    "purchasePriceCents" => 350,
-                   "purchasePriceText" => "$3.50",
-                   "valueGainText" => "$0",
+                   "purchasePriceText" => "€3.50",
+                   "valueGainText" => "€0",
                    "valueGainPercentText" => "0%",
                    "printing" => %{
                      "scryfallId" => "scryfall-printing-2",
@@ -104,7 +104,7 @@ defmodule ManavaultWeb.Schema.CollectionItemsTest do
           "lang" => "en",
           "image_uris" => %{},
           "finishes" => ["nonfoil", "foil"],
-          "prices" => %{"usd" => "2.00", "usd_foil" => "5.00"},
+          "prices" => %{"eur" => "2.00", "eur_foil" => "5.00"},
           "legalities" => %{}
         },
         %{
@@ -118,7 +118,7 @@ defmodule ManavaultWeb.Schema.CollectionItemsTest do
           "lang" => "en",
           "image_uris" => %{},
           "finishes" => ["nonfoil", "foil"],
-          "prices" => %{"usd" => "3.00", "usd_foil" => "6.00"},
+          "prices" => %{"eur" => "3.00", "eur_foil" => "6.00"},
           "legalities" => %{}
         }
       ])
@@ -194,8 +194,8 @@ defmodule ManavaultWeb.Schema.CollectionItemsTest do
                    "finish" => "foil",
                    "notes" => "Moved",
                    "purchasePriceCents" => 1234,
-                   "purchasePriceText" => "$12.34",
-                   "valueGainText" => "-$6.34",
+                   "purchasePriceText" => "€12.34",
+                   "valueGainText" => "-€6.34",
                    "valueGainPercentText" => "-51.4%",
                    "location" => %{"name" => "New List"},
                    "printing" => %{
@@ -246,7 +246,7 @@ defmodule ManavaultWeb.Schema.CollectionItemsTest do
           "lang" => "en",
           "image_uris" => %{},
           "finishes" => ["nonfoil", "foil"],
-          "prices" => %{"usd" => "2.00", "usd_foil" => "5.00"},
+          "prices" => %{"eur" => "2.00", "eur_foil" => "5.00"},
           "legalities" => %{}
         }
       ])

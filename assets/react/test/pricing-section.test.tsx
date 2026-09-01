@@ -71,7 +71,14 @@ test("selecting a price source updates the control and clears stale cached price
 function pricingSettings(source: string) {
   return {
     source,
-    sources: ["scryfall", "manapool"],
-    vendors: [{ vendor: "manapool", priceCount: 100, lastSyncedAt: "2026-08-10T12:00:00Z" }],
+    sources: ["scryfall", "cardmarket", "manapool"],
+    currency: "EUR",
+    usdPerEur: 1.1723,
+    fxRateDate: "2026-09-01",
+    fxSource: "ECB",
+    vendors: [
+      { vendor: "cardmarket", priceCount: 90, lastSyncedAt: "2026-09-01T06:00:00Z" },
+      { vendor: "manapool", priceCount: 100, lastSyncedAt: "2026-08-10T12:00:00Z" },
+    ],
   }
 }

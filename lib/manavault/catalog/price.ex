@@ -65,11 +65,11 @@ defmodule Manavault.Catalog.Price do
   def format_cents(cents) when is_integer(cents) and cents > 999_999 do
     dollars = cents / 100
     thousands = dollars / 1_000
-    "$#{format_thousands(thousands)}k"
+    "€#{format_thousands(thousands)}k"
   end
 
   def format_cents(cents) when is_integer(cents) and cents >= 10_000 do
-    "$#{div(cents, 100)}"
+    "€#{div(cents, 100)}"
   end
 
   def format_cents(cents) when is_integer(cents) do
@@ -77,9 +77,9 @@ defmodule Manavault.Catalog.Price do
     remainder = rem(cents, 100)
 
     if remainder == 0 do
-      "$#{dollars}"
+      "€#{dollars}"
     else
-      "$#{dollars}.#{remainder |> Integer.to_string() |> String.pad_leading(2, "0")}"
+      "€#{dollars}.#{remainder |> Integer.to_string() |> String.pad_leading(2, "0")}"
     end
   end
 
@@ -93,7 +93,7 @@ defmodule Manavault.Catalog.Price do
     "-#{format_cents(abs(cents))}"
   end
 
-  def format_signed_cents(0), do: "$0"
+  def format_signed_cents(0), do: "€0"
 
   def format_percent(nil), do: nil
 
@@ -165,10 +165,18 @@ defmodule Manavault.Catalog.Price do
   defp vendor_price_cents(_printing, _finish), do: nil
 
   defp scryfall_price_cents(%Printing{prices: prices}, finish) do
-    prices
-    |> decode_prices()
-    |> price_string_for_finish(finish)
-    |> parse_cents()
+    prices = decode_prices(prices)
+
+    native_eur =
+      prices
+      |> first_present(eur_fallback_keys(finish))
+      |> parse_cents()
+
+    native_eur ||
+      prices
+      |> first_present(usd_fallback_keys(finish))
+      |> parse_cents()
+      |> Manavault.Pricing.usd_cents_to_eur()
   end
 
   @doc "Ordered printing finishes to try for a current price."
@@ -177,11 +185,21 @@ defmodule Manavault.Catalog.Price do
   def finish_fallbacks(_finish), do: ["nonfoil", "foil", "etched"]
 
   @doc """
-  Ordered Scryfall `prices` JSON keys to try for a USD price, given a finish.
+  Ordered Scryfall `prices` JSON keys to try for a native EUR price.
 
-  The single source of truth for finish-aware price fallback:
-  `Manavault.Catalog.PriceFragments` compiles this same ordering into its
-  SQL fragments, so the in-memory and query paths cannot drift.
+  Scryfall currently exposes EUR for nonfoil and foil. Etched deliberately
+  probes a non-existent exact EUR key first so its USD etched price can be
+  converted before falling back to another finish.
+  """
+  def eur_fallback_keys("foil"), do: ["eur_foil", "eur"]
+  def eur_fallback_keys("etched"), do: ["eur_etched"]
+  def eur_fallback_keys(_finish), do: ["eur", "eur_foil"]
+
+  @doc """
+  Ordered Scryfall `prices` JSON keys to try for a USD fallback price.
+
+  The SQL pricing path compiles both this ordering and `eur_fallback_keys/1`
+  so in-memory and aggregate pricing remain consistent.
   """
   def usd_fallback_keys(finish) do
     Enum.map(finish_fallbacks(finish), fn
@@ -189,9 +207,6 @@ defmodule Manavault.Catalog.Price do
       finish -> "usd_#{finish}"
     end)
   end
-
-  defp price_string_for_finish(prices, finish),
-    do: first_present(prices, usd_fallback_keys(finish))
 
   defp first_present(prices, keys) do
     Enum.find_value(keys, fn key ->
@@ -214,8 +229,8 @@ defmodule Manavault.Catalog.Price do
     normalized =
       price
       |> String.trim()
-      |> String.replace(",", "")
-      |> String.trim_leading("$")
+      |> String.replace(~r/[€$\s]/u, "")
+      |> normalize_decimal_separator()
 
     case Regex.run(~r/^(\d+)(?:\.(\d{1,2}))?$/, normalized) do
       [_, dollars] ->
@@ -231,6 +246,19 @@ defmodule Manavault.Catalog.Price do
   end
 
   def parse_cents(_price), do: nil
+
+  defp normalize_decimal_separator(value) do
+    cond do
+      Regex.match?(~r/^\d{1,3}(?:\.\d{3})+,\d{1,2}$/, value) ->
+        value |> String.replace(".", "") |> String.replace(",", ".")
+
+      Regex.match?(~r/^\d+,\d{1,2}$/, value) ->
+        String.replace(value, ",", ".")
+
+      true ->
+        String.replace(value, ",", "")
+    end
+  end
 
   defp collection_items_sum_cents(items, price_fun) do
     Enum.reduce(List.wrap(items), 0, fn

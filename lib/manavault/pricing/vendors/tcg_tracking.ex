@@ -16,6 +16,7 @@ defmodule Manavault.Pricing.Vendors.TcgTracking do
   @magic_category 1
 
   def vendor, do: "tcgplayer"
+  def currency, do: :usd
 
   def sync_interval, do: :timer.hours(24)
 

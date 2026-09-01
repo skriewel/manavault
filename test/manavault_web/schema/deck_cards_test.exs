@@ -178,7 +178,7 @@ defmodule ManavaultWeb.Schema.DeckCardsTest do
           "lang" => "en",
           "image_uris" => %{},
           "finishes" => ["nonfoil"],
-          "prices" => %{"usd" => "9.00"},
+          "prices" => %{"eur" => "9.00"},
           "legalities" => %{}
         },
         %{
@@ -192,7 +192,7 @@ defmodule ManavaultWeb.Schema.DeckCardsTest do
           "lang" => "en",
           "image_uris" => %{},
           "finishes" => ["nonfoil"],
-          "prices" => %{"usd" => "1.25"},
+          "prices" => %{"eur" => "1.25"},
           "legalities" => %{}
         },
         %{
@@ -206,7 +206,7 @@ defmodule ManavaultWeb.Schema.DeckCardsTest do
           "lang" => "en",
           "image_uris" => %{},
           "finishes" => ["nonfoil"],
-          "prices" => %{"usd" => "0.50"},
+          "prices" => %{"eur" => "0.50"},
           "legalities" => %{}
         }
       ])

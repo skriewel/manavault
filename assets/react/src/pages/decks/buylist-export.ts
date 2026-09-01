@@ -68,7 +68,7 @@ export function deckMissingCardsTotalPrice(deckCards: DeckCardEntry[]) {
 
 export function formatUsdCents(cents: number) {
   return new Intl.NumberFormat(undefined, {
-    currency: "USD",
+    currency: "EUR",
     maximumFractionDigits: cents % 100 === 0 ? 0 : 2,
     style: "currency",
   }).format(cents / 100)
