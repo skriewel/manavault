@@ -398,7 +398,7 @@ export function ImportCollectionDialog({
                   className="input input-bordered w-full bg-base-100"
                   value={purchasePrice}
                   onChange={(event) => updatePurchasePrice(event.target.value)}
-                  placeholder={purchaseMode === "total_spend" ? "$439.00" : "$1.00"}
+                  placeholder={purchaseMode === "total_spend" ? "€439.00" : "€1.00"}
                 />
                 <p className="text-sm text-base-content/55">
                   {purchaseMode === "total_spend"
