@@ -381,7 +381,7 @@ export function ImportCollectionDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="per_card">Price per card</SelectItem>
-                    <SelectItem value="total_spend">Total amount spent</SelectItem>
+                    <SelectItem value="total_spend">Total amount spent (EUR)</SelectItem>
                   </SelectContent>
                 </Select>
               </label>
@@ -389,8 +389,8 @@ export function ImportCollectionDialog({
               <label className="block space-y-2">
                 <span className="text-xs font-black uppercase tracking-[0.18em] text-accent">
                   {purchaseMode === "total_spend"
-                    ? "Total amount spent"
-                    : "Purchase price per card"}
+                    ? "Total amount spent (EUR)"
+                    : "Purchase price per card (EUR)"}
                 </span>
                 <input
                   type="text"
