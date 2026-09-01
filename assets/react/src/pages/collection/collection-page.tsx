@@ -150,7 +150,7 @@ function activeCollectionFilterChips(
     })
   }
   if (filters.priceUsd.trim()) {
-    chips.push({ key: "price", label: `USD ${filters.priceOperator} ${filters.priceUsd.trim()}` })
+    chips.push({ key: "price", label: `EUR ${filters.priceOperator} ${filters.priceUsd.trim()}` })
   }
   if (filters.releasedDate.trim()) {
     chips.push({
