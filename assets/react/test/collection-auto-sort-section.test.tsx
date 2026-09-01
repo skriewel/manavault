@@ -179,18 +179,18 @@ test("client validation blocks preview and save without discarding the staged ru
   )
 
   await user.click(screen.getByRole("button", { name: "Add rule" }))
-  await user.type(screen.getByRole("textbox", { name: /Minimum price/ }), "not money")
+  await user.type(screen.getByRole("textbox", { name: /Minimum price (EUR)/ }), "not money")
   await user.click(screen.getByRole("button", { name: "Done" }))
   await user.click(screen.getByRole("button", { name: "Preview auto-sort" }))
   await user.click(screen.getByRole("button", { name: "Save rules" }))
 
   expect(onValidationError).toHaveBeenNthCalledWith(
     1,
-    "New auto-sort rule: minimum price must be a dollar amount.",
+    "New auto-sort rule: minimum price must be a euro amount.",
   )
   expect(onValidationError).toHaveBeenNthCalledWith(
     2,
-    "New auto-sort rule: minimum price must be a dollar amount.",
+    "New auto-sort rule: minimum price must be a euro amount.",
   )
   expect(onPreview).not.toHaveBeenCalled()
   expect(onSave).not.toHaveBeenCalled()
