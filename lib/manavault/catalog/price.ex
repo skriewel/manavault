@@ -187,11 +187,12 @@ defmodule Manavault.Catalog.Price do
   @doc """
   Ordered Scryfall `prices` JSON keys to try for a native EUR price.
 
-  Scryfall currently exposes EUR for nonfoil and foil, not a separate etched
-  field, so etched uses the foil/nonfoil EUR chain.
+  Scryfall currently exposes EUR for nonfoil and foil. Etched deliberately
+  probes a non-existent exact EUR key first so its USD etched price can be
+  converted before falling back to another finish.
   """
   def eur_fallback_keys("foil"), do: ["eur_foil", "eur"]
-  def eur_fallback_keys("etched"), do: ["eur_foil", "eur"]
+  def eur_fallback_keys("etched"), do: ["eur_etched"]
   def eur_fallback_keys(_finish), do: ["eur", "eur_foil"]
 
   @doc """
