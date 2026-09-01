@@ -4,7 +4,7 @@ defmodule Manavault.Pricing.VendorSyncWorker do
   use Oban.Worker,
     queue: :pricing,
     max_attempts: 3,
-    unique: [period: :infinity, fields: [:worker], states: :incomplete]
+    unique: [period: :infinity, fields: [:worker, :args], states: :incomplete]
 
   require Logger
 
@@ -15,9 +15,17 @@ defmodule Manavault.Pricing.VendorSyncWorker do
   def perform(%Oban.Job{args: args}) do
     vendors = if args["force"], do: Pricing.vendors(), else: stale_vendors()
 
+    Logger.info(
+      "Vendor price sync job started mode=#{if(args["force"], do: "manual", else: "scheduled")} vendors=#{Enum.join(vendors, ",")}"
+    )
+
     case vendors do
-      [] -> :ok
-      vendors -> sync(vendors)
+      [] ->
+        Logger.info("Vendor price sync job skipped; all vendors are fresh")
+        :ok
+
+      vendors ->
+        sync(vendors)
     end
   end
 

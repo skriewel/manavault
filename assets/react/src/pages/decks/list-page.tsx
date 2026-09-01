@@ -152,7 +152,7 @@ function DeckGalleryErrorState({ onRetry }: { onRetry: () => void }) {
 type DeckReadiness = {
   label: string
   tone: "neutral" | "primary" | "success" | "warning" | "error"
-  detail: string
+  detail?: string
   detailTone: "neutral" | "primary" | "success" | "warning" | "error"
 }
 
@@ -161,7 +161,7 @@ function deckReadiness(deck: DeckSummary): DeckReadiness {
     return {
       label: titleize(deck.status),
       tone: deck.status === "archived" ? "neutral" : "success",
-      detail: deck.status === "archived" ? "Allocations retained" : "Reserves cards",
+      detail: deck.status === "archived" ? "Allocations retained" : undefined,
       detailTone: deck.status === "archived" ? "neutral" : "primary",
     }
   }
@@ -189,7 +189,7 @@ function DeckReadinessBadges({ readiness }: { readiness: DeckReadiness }) {
   return (
     <div className="flex flex-wrap items-center gap-2 leading-none">
       <Badge tone={readiness.tone}>{readiness.label}</Badge>
-      <Badge tone={readiness.detailTone}>{readiness.detail}</Badge>
+      {readiness.detail ? <Badge tone={readiness.detailTone}>{readiness.detail}</Badge> : null}
     </div>
   )
 }

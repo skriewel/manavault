@@ -12,6 +12,8 @@ defmodule Manavault.Pricing do
 
   import Ecto.Query
 
+  require Logger
+
   alias Manavault.Catalog.Cache
 
   alias Manavault.Pricing.{
@@ -99,9 +101,22 @@ defmodule Manavault.Pricing do
   def sync_vendors(vendors \\ @vendors), do: Sync.run(vendors)
 
   def sync_vendors_async do
-    %{force: true}
-    |> VendorSyncWorker.new(replace: [available: [:args], scheduled: [:args], retryable: [:args]])
-    |> Oban.insert()
+    result =
+      %{force: true}
+      |> VendorSyncWorker.new()
+      |> Oban.insert()
+
+    case result do
+      {:ok, job} ->
+        Logger.info(
+          "Vendor price sync queued job_id=#{job.id} state=#{job.state} conflict=#{job.conflict?}"
+        )
+
+      {:error, reason} ->
+        Logger.warning("Vendor price sync queue failed error=#{inspect(reason)}")
+    end
+
+    result
   end
 
   def vendor_statuses do

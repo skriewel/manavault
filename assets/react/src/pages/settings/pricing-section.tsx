@@ -43,6 +43,7 @@ export function PricingSection() {
 
   const settingsQuery = useQuery(PricingSettingsDocument, {
     fetchPolicy: "cache-and-network",
+    pollInterval: 5_000,
   })
 
   const [updatePricingSettings, updateMutation] = useMutation(UpdatePricingSettingsDocument)

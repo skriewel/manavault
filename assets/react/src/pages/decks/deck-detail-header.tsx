@@ -281,11 +281,9 @@ export function DeckDetailHeader({
                   <DeckBracketBadge deck={deck} />
                   <DeckSaltBadge saltSum={saltSum} />
                 </>
-              ) : (
-                <Badge tone={deck.status === "archived" ? "neutral" : "primary"}>
-                  {deck.status === "archived" ? "Allocations retained" : "Reserves collection cards"}
-                </Badge>
-              )}
+              ) : deck.status === "archived" ? (
+                <Badge tone="neutral">Allocations retained</Badge>
+              ) : null}
               <DeckPriceChip
                 price={deckPrice}
                 onClick={shareMode ? onShareBuylist : onMissingCards}
