@@ -17,6 +17,15 @@ defmodule Manavault.Pricing.VendorSyncWorkerTest do
     assert_enqueued(worker: VendorSyncWorker, args: %{force: true})
   end
 
+  test "manual sync does not conflict with a scheduled sync" do
+    assert {:ok, scheduled_job} = %{} |> VendorSyncWorker.new() |> Oban.insert()
+    assert {:ok, manual_job} = Pricing.sync_vendors_async()
+
+    refute manual_job.conflict?
+    refute manual_job.id == scheduled_job.id
+    assert manual_job.args == %{force: true}
+  end
+
   test "periodic jobs skip vendors with fresh prices" do
     now = DateTime.utc_now()
 
