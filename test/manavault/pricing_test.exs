@@ -5,13 +5,13 @@ defmodule Manavault.PricingTest do
   alias Manavault.Catalog
   alias Manavault.Catalog.{Price, Printing}
   alias Manavault.Pricing
-  alias Manavault.Pricing.{Money, Store, Sync, VendorPrice}
-  alias Manavault.Pricing.Vendors.{CardKingdom, ManaPool, TcgTracking}
+  alias Manavault.Pricing.{ExchangeRate, Money, Settings, Store, Sync, VendorPrice}
+  alias Manavault.Pricing.Vendors.{CardKingdom, CardMarket, ManaPool, TcgTracking}
 
   @mana_pool_stub __MODULE__
 
   describe "Money.to_cents/1" do
-    test "parses decimal dollar strings" do
+    test "parses decimal currency strings" do
       assert Money.to_cents("0.35") == 35
       assert Money.to_cents("12.5") == 1250
       assert Money.to_cents("479.95") == 47_995
@@ -21,6 +21,12 @@ defmodule Manavault.PricingTest do
     test "converts numbers" do
       assert Money.to_cents(5) == 500
       assert Money.to_cents(9.57) == 957
+    end
+
+    test "converts USD cents to EUR cents" do
+      assert Money.usd_cents_to_eur(1_100, 1.1) == 1_000
+      assert Money.usd_cents_to_eur(999, 1.2) == 833
+      assert Money.usd_cents_to_eur(100, nil) == nil
     end
 
     test "rejects missing, malformed, zero, and negative values" do
@@ -98,6 +104,63 @@ defmodule Manavault.PricingTest do
     test "tolerates unexpected payloads" do
       assert CardKingdom.rows(%{}) == []
       assert CardKingdom.rows("nope") == []
+    end
+  end
+
+  describe "CardMarket.rows/2" do
+    test "joins Cardmarket product IDs to Scryfall printings and uses trend prices" do
+      body = %{
+        "priceGuides" => [
+          %{
+            "idProduct" => 12_345,
+            "trend" => 10.25,
+            "trend-foil" => 14.50
+          },
+          %{
+            "idProduct" => 99_999,
+            "trend" => 1.00,
+            "trend-foil" => 2.00
+          }
+        ]
+      }
+
+      product_map = %{12_345 => ["scryfall-a", "scryfall-b"]}
+
+      assert MapSet.new(CardMarket.rows(body, product_map)) ==
+               MapSet.new([
+                 %{scryfall_id: "scryfall-a", finish: "nonfoil", price_cents: 1_025},
+                 %{scryfall_id: "scryfall-a", finish: "foil", price_cents: 1_450},
+                 %{scryfall_id: "scryfall-b", finish: "nonfoil", price_cents: 1_025},
+                 %{scryfall_id: "scryfall-b", finish: "foil", price_cents: 1_450}
+               ])
+    end
+
+    test "accepts JSON text and skips zero or missing trend prices" do
+      body =
+        Jason.encode!(%{
+          "priceGuides" => [
+            %{"idProduct" => "42", "trend" => "3.75", "trend-foil" => 0}
+          ]
+        })
+
+      assert CardMarket.rows(body, %{42 => ["scryfall-42"]}) == [
+               %{scryfall_id: "scryfall-42", finish: "nonfoil", price_cents: 375}
+             ]
+    end
+  end
+
+  describe "ExchangeRate" do
+    test "parses the ECB daily EUR USD reference rate" do
+      xml = """
+      <Cube>
+        <Cube time='2026-09-01'>
+          <Cube currency='USD' rate='1.1723'/>
+        </Cube>
+      </Cube>
+      """
+
+      assert ExchangeRate.parse(xml) ==
+               {:ok, %{usd_per_eur: 1.1723, date: ~D[2026-09-01]}}
     end
   end
 
@@ -313,6 +376,9 @@ defmodule Manavault.PricingTest do
     test "defaults to scryfall and validates sources" do
       assert Pricing.settings().source == "scryfall"
 
+      assert {:ok, %{source: "cardmarket"}} = Pricing.set_source("cardmarket")
+      assert Pricing.settings().source == "cardmarket"
+
       assert {:ok, %{source: "tcgplayer"}} = Pricing.set_source("tcgplayer")
       assert Pricing.settings().source == "tcgplayer"
 
@@ -337,7 +403,7 @@ defmodule Manavault.PricingTest do
 
       printing = %Printing{
         scryfall_id: "print-1",
-        prices: Jason.encode!(%{"usd_foil" => "198.04"})
+        prices: Jason.encode!(%{"eur_foil" => "198.04"})
       }
 
       assert Price.price_cents_for_printing(printing, "foil") == 65_098
@@ -350,10 +416,31 @@ defmodule Manavault.PricingTest do
 
       printing = %Printing{
         scryfall_id: "print-2",
-        prices: Jason.encode!(%{"usd" => "12.34"})
+        prices: Jason.encode!(%{"eur" => "12.34"})
       }
 
       assert Price.price_cents_for_printing(printing, "nonfoil") == 1234
+    end
+
+    test "converts Scryfall USD only as a fallback" do
+      settings = Pricing.settings()
+
+      assert {:ok, _settings} =
+               settings
+               |> Settings.exchange_rate_changeset(%{
+                 usd_per_eur: 1.25,
+                 fx_rate_date: ~D[2026-09-01]
+               })
+               |> Repo.update()
+
+      {:ok, _settings} = Pricing.set_source("scryfall")
+
+      printing = %Printing{
+        scryfall_id: "print-usd-only",
+        prices: Jason.encode!(%{"usd" => "12.50"})
+      }
+
+      assert Price.price_cents_for_printing(printing, "nonfoil") == 1_000
     end
 
     test "scryfall source ignores vendor rows entirely" do
@@ -365,7 +452,7 @@ defmodule Manavault.PricingTest do
 
       printing = %Printing{
         scryfall_id: "print-3",
-        prices: Jason.encode!(%{"usd" => "1.00"})
+        prices: Jason.encode!(%{"eur" => "1.00"})
       }
 
       assert Price.price_cents_for_printing(printing, "nonfoil") == 100
