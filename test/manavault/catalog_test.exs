@@ -48,20 +48,20 @@ defmodule Manavault.CatalogTest do
   end
 
   test "price helpers parse and shorten Scryfall prices" do
-    assert Price.format_cents(99) == "$0.99"
-    assert Price.format_cents(12_345) == "$123"
-    assert Price.format_cents(240_000) == "$2400"
-    assert Price.format_cents(1_000_000) == "$10k"
-    assert Price.format_cents(10_000_000) == "$100k"
-    assert Price.parse_cents("$1,234.50") == 123_450
-    assert Price.format_signed_cents(468) == "+$4.68"
-    assert Price.format_signed_cents(-468) == "-$4.68"
+    assert Price.format_cents(99) == "€0.99"
+    assert Price.format_cents(12_345) == "€123"
+    assert Price.format_cents(240_000) == "€2400"
+    assert Price.format_cents(1_000_000) == "€10k"
+    assert Price.format_cents(10_000_000) == "€100k"
+    assert Price.parse_cents("€1.234,50") == 123_450
+    assert Price.format_signed_cents(468) == "+€4.68"
+    assert Price.format_signed_cents(-468) == "-€4.68"
     assert Price.format_percent(23.4) == "+23.4%"
 
-    printing = %Printing{prices: Jason.encode!(%{"usd" => "12.34", "usd_foil" => "24.00"})}
+    printing = %Printing{prices: Jason.encode!(%{"eur" => "12.34", "eur_foil" => "24.00"})}
 
-    assert Price.text_for_printing(printing, "nonfoil") == "$12.34"
-    assert Price.text_for_printing(printing, "foil") == "$24"
+    assert Price.text_for_printing(printing, "nonfoil") == "€12.34"
+    assert Price.text_for_printing(printing, "foil") == "€24"
 
     item = %CollectionItem{
       quantity: 2,
@@ -199,11 +199,11 @@ defmodule Manavault.CatalogTest do
     assert {:ok, _counts} = Catalog.import_cards([time_walk(), black_lotus(), plains()])
 
     assert ["Black Lotus", "Time Walk"] =
-             Catalog.search_cards("usd>=1", sort: %{field: "price", direction: "desc"})
+             Catalog.search_cards("eur>=1", sort: %{field: "price", direction: "desc"})
              |> Enum.map(& &1.name)
 
     assert ["Time Walk", "Black Lotus"] =
-             Catalog.search_cards("usd>=1", sort: %{field: "price", direction: "asc"})
+             Catalog.search_cards("eur>=1", sort: %{field: "price", direction: "asc"})
              |> Enum.map(& &1.name)
   end
 
@@ -235,19 +235,19 @@ defmodule Manavault.CatalogTest do
   end
 
   test "search_cards surfaces the printing matching combined set and price filters" do
-    cheap_alpha = Map.put(black_lotus(), "prices", %{"usd" => "1.00"})
-    pricey_beta = Map.put(black_lotus_beta(), "prices", %{"usd" => "5.00"})
+    cheap_alpha = Map.put(black_lotus(), "prices", %{"eur" => "1.00"})
+    pricey_beta = Map.put(black_lotus_beta(), "prices", %{"eur" => "5.00"})
 
     assert {:ok, _counts} = Catalog.import_cards([cheap_alpha, pricey_beta])
 
-    assert [%{printings: [first, second]}] = Catalog.search_cards("set:leb usd>=3")
+    assert [%{printings: [first, second]}] = Catalog.search_cards("set:leb eur>=3")
     assert first.set_code == "leb"
     assert second.set_code == "lea"
   end
 
   test "search_cards surfaces the earliest printing among several filter matches" do
-    cheap_alpha = Map.put(black_lotus(), "prices", %{"usd" => "1.00"})
-    pricey_beta = Map.put(black_lotus_beta(), "prices", %{"usd" => "5.00"})
+    cheap_alpha = Map.put(black_lotus(), "prices", %{"eur" => "1.00"})
+    pricey_beta = Map.put(black_lotus_beta(), "prices", %{"eur" => "5.00"})
 
     pricey_unlimited =
       Map.merge(black_lotus_beta(), %{
@@ -255,13 +255,13 @@ defmodule Manavault.CatalogTest do
         "set" => "2ed",
         "set_name" => "Unlimited Edition",
         "released_at" => "1993-12-01",
-        "prices" => %{"usd" => "10.00"}
+        "prices" => %{"eur" => "10.00"}
       })
 
     assert {:ok, _counts} =
              Catalog.import_cards([cheap_alpha, pricey_beta, pricey_unlimited])
 
-    assert [%{printings: [first, second, third]}] = Catalog.search_cards("usd>=3")
+    assert [%{printings: [first, second, third]}] = Catalog.search_cards("eur>=3")
     assert first.set_code == "leb"
     assert second.set_code == "2ed"
     assert third.set_code == "lea"
