@@ -13,11 +13,11 @@ defmodule Manavault.Pricing do
   import Ecto.Query
 
   alias Manavault.Catalog.Cache
-  alias Manavault.Pricing.{Settings, Store, Sync, VendorPrice, VendorSyncWorker}
+  alias Manavault.Pricing.{ExchangeRate, Money, Settings, Store, Sync, VendorPrice, VendorSyncWorker}
   alias Manavault.Repo
 
   @singleton_id 1
-  @vendors ~w(tcgplayer cardkingdom manapool)
+  @vendors ~w(cardmarket tcgplayer cardkingdom manapool)
 
   defdelegate sources, to: Settings
 
@@ -25,6 +25,41 @@ defmodule Manavault.Pricing do
 
   def settings do
     Repo.get(Settings, @singleton_id) || insert_default_settings!()
+  end
+
+  def exchange_rate do
+    settings = settings()
+
+    %{
+      usd_per_eur: settings.usd_per_eur,
+      date: settings.fx_rate_date,
+      source: "ECB"
+    }
+  end
+
+  def refresh_exchange_rate(req_options \\ []) do
+    case ExchangeRate.fetch(req_options) do
+      {:ok, %{usd_per_eur: usd_per_eur, date: date}} ->
+        settings()
+        |> Settings.exchange_rate_changeset(%{usd_per_eur: usd_per_eur, fx_rate_date: date})
+        |> Repo.update()
+
+      {:error, reason} ->
+        case settings() do
+          %Settings{usd_per_eur: rate} = settings when is_number(rate) and rate > 0 ->
+            {:ok, settings}
+
+          _settings ->
+            {:error, reason}
+        end
+    end
+  end
+
+  def usd_cents_to_eur(cents) do
+    case settings().usd_per_eur do
+      rate when is_number(rate) and rate > 0 -> Money.usd_cents_to_eur(cents, rate)
+      _missing -> nil
+    end
   end
 
   def set_source(source) do
