@@ -10,6 +10,7 @@ defmodule Manavault.Pricing.Vendors.CardKingdom do
   @pricelist_url "https://api.cardkingdom.com/api/v2/pricelist"
 
   def vendor, do: "cardkingdom"
+  def currency, do: :usd
 
   def sync_interval, do: :timer.hours(6)
 
