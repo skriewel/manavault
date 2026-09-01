@@ -69,7 +69,7 @@ test("total spend pricing previews the calculated per-card purchase price", asyn
   await user.type(screen.getByRole("textbox", { name: "Import text" }), "60 Card")
   await user.click(screen.getByRole("button", { name: "Preview import" }))
 
-  expect(screen.getByText("$439 ÷ 60 cards =")).not.toBeNull()
-  expect(screen.getByText("$7.32 per card")).not.toBeNull()
-  expect(screen.getAllByText("$7.32")).toHaveLength(2)
+  expect(screen.getByText("€439 ÷ 60 cards =")).not.toBeNull()
+  expect(screen.getByText("€7.32 per card")).not.toBeNull()
+  expect(screen.getAllByText("€7.32")).toHaveLength(2)
 })
