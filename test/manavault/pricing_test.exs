@@ -8,9 +8,9 @@ defmodule Manavault.PricingTest do
   alias Manavault.Pricing.{ExchangeRate, Money, Settings, Store, Sync, VendorPrice}
   alias Manavault.Pricing.Vendors.{CardKingdom, CardMarket, ManaPool, TcgTracking}
 
-  @mana_pool_stub {__MODULE__, :mana_pool}
-  @cardmarket_stub {__MODULE__, :cardmarket}
-  @ecb_stub {__MODULE__, :ecb}
+  @mana_pool_stub :pricing_mana_pool_stub
+  @cardmarket_stub :pricing_cardmarket_stub
+  @ecb_stub :pricing_ecb_stub
 
   describe "Money.to_cents/1" do
     test "parses decimal currency strings" do
