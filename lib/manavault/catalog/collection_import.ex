@@ -236,7 +236,14 @@ defmodule Manavault.Catalog.CollectionImport do
       key when key in ["language", "lang"] ->
         "language"
 
-      key when key in ["purchase_price", "purchase_price_usd", "price_paid", "paid"] ->
+      key
+      when key in [
+             "purchase_price",
+             "purchase_price_eur",
+             "purchase_price_usd",
+             "price_paid",
+             "paid"
+           ] ->
         "purchase_price_cents"
 
       key when key in ["scryfall", "scryfall_id", "printing_id"] ->
