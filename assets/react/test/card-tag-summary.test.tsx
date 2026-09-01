@@ -32,7 +32,9 @@ function card(overrides: Partial<CardDetail> = {}): CardDetail {
 test("nonlegendary cards link only their card rank and show the bare salt score", () => {
   render(<CardTagSummary card={card()} />)
 
-  const cardRank = screen.getByRole("link", { name: "#1,234 as card" })
+  const cardRank = screen.getByRole("link", {
+    name: `#${new Intl.NumberFormat().format(1234)} as card`,
+  })
   expect(cardRank.getAttribute("href")).toBe("https://edhrec.com/cards/ranked-card")
   expect(screen.queryByText(/as commander/)).toBeNull()
   expect(screen.getByText("2.50")).toBeTruthy()
@@ -52,7 +54,9 @@ test("legendary creatures link commander and card ranks to their respective page
   )
 
   const commanderRank = screen.getByRole("link", { name: "#33 as commander" })
-  const cardRank = screen.getByRole("link", { name: "#2,603 as card" })
+  const cardRank = screen.getByRole("link", {
+    name: `#${new Intl.NumberFormat().format(2603)} as card`,
+  })
 
   expect(commanderRank.getAttribute("href")).toBe(
     "https://edhrec.com/commanders/esika-god-of-the-tree",

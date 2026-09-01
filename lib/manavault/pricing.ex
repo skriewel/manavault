@@ -13,6 +13,7 @@ defmodule Manavault.Pricing do
   import Ecto.Query
 
   alias Manavault.Catalog.Cache
+
   alias Manavault.Pricing.{
     ExchangeRate,
     Money,
@@ -22,6 +23,7 @@ defmodule Manavault.Pricing do
     VendorPrice,
     VendorSyncWorker
   }
+
   alias Manavault.Repo
 
   @singleton_id 1
@@ -63,12 +65,14 @@ defmodule Manavault.Pricing do
     end
   end
 
-  def usd_cents_to_eur(cents) do
+  def usd_cents_to_eur(cents) when is_integer(cents) do
     case settings().usd_per_eur do
       rate when is_number(rate) and rate > 0 -> Money.usd_cents_to_eur(cents, rate)
       _missing -> nil
     end
   end
+
+  def usd_cents_to_eur(_cents), do: nil
 
   def set_source(source) do
     result =

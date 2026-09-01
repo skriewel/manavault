@@ -62,6 +62,7 @@ export type CollectionImportAttrsInput = {
   collectorNumber?: string | null | undefined;
   condition?: string | null | undefined;
   finish?: string | null | undefined;
+  isProxy?: boolean | null | undefined;
   language?: string | null | undefined;
   locationId?: string | number | null | undefined;
   name?: string | null | undefined;
@@ -69,7 +70,6 @@ export type CollectionImportAttrsInput = {
   quantity?: number | null | undefined;
   scryfallId?: string | number | null | undefined;
   setCode?: string | null | undefined;
-  isProxy?: boolean | null | undefined;
 };
 
 export type CollectionImportCommitInput = {
@@ -105,10 +105,10 @@ export type CollectionItemFilters = {
 
 export type CollectionItemInput = {
   condition?: string | null | undefined;
-  isProxy?: boolean | null | undefined;
   finish?: string | null | undefined;
   forTrade?: boolean | null | undefined;
   forTradeQuantity?: number | null | undefined;
+  isProxy?: boolean | null | undefined;
   language?: string | null | undefined;
   locationId?: string | number | null | undefined;
   notes?: string | null | undefined;
@@ -131,10 +131,10 @@ export type CollectionItemSort = {
 
 export type CollectionItemUpdateInput = {
   condition?: string | null | undefined;
-  isProxy?: boolean | null | undefined;
   finish?: string | null | undefined;
   forTrade?: boolean | null | undefined;
   forTradeQuantity?: number | null | undefined;
+  isProxy?: boolean | null | undefined;
   language?: string | null | undefined;
   locationId?: string | number | null | undefined;
   notes?: string | null | undefined;
@@ -496,7 +496,7 @@ export type DecksQueryVariables = Exact<{
 }>;
 
 
-export type DecksQuery = { decks: { pageInfo: { endCursor: string | null, hasNextPage: boolean }, edges: Array<{ node: { id: string, name: string, kind: string, format: string, status: string, location: { id: string, name: string, kind: string } | null, playCount: number, skipCount: number, lastPlayedAt: string | null, primer: string | null, aiAnalysis: string | null, aiAnalysisModel: string | null, aiAnalyzedAt: string | null, commanderBracket: number | null, commanderBracketEstimate: number | null, shareToken: string | null, coverDeckCardId: string | null, coverImageUrl: string | null, commanderColorIdentity: Array<string | null> | null, cardCount: number | null, legality: { status: string, issues: Array<{ code: string, message: string, severity: string, cardName: string | null }> } } | null } | null> | null } };
+export type DecksQuery = { decks: { pageInfo: { endCursor: string | null, hasNextPage: boolean }, edges: Array<{ node: { id: string, name: string, kind: string, format: string, status: string, playCount: number, skipCount: number, lastPlayedAt: string | null, primer: string | null, aiAnalysis: string | null, aiAnalysisModel: string | null, aiAnalyzedAt: string | null, commanderBracket: number | null, commanderBracketEstimate: number | null, shareToken: string | null, coverDeckCardId: string | null, coverImageUrl: string | null, commanderColorIdentity: Array<string | null> | null, cardCount: number | null, location: { id: string, name: string, kind: string } | null, legality: { status: string, issues: Array<{ code: string, message: string, severity: string, cardName: string | null }> } } | null } | null> | null } };
 
 export type RandomDeckQueryVariables = Exact<{
   excludeId?: string | number | null | undefined;
@@ -518,7 +518,7 @@ export type CreateDeckMutationVariables = Exact<{
 }>;
 
 
-export type CreateDeckMutation = { createDeck: { deck: { id: string, name: string, kind: string, format: string, status: string, location: { id: string, name: string, kind: string } | null, primer: string | null, aiAnalysis: string | null, aiAnalysisModel: string | null, aiAnalyzedAt: string | null, commanderBracket: number | null, commanderBracketEstimate: number | null, shareToken: string | null, coverDeckCardId: string | null, coverImageUrl: string | null, commanderColorIdentity: Array<string | null> | null, cardCount: number | null, legality: { status: string, issues: Array<{ code: string, message: string, severity: string, cardName: string | null }> } } | null } | null };
+export type CreateDeckMutation = { createDeck: { deck: { id: string, name: string, kind: string, format: string, status: string, primer: string | null, aiAnalysis: string | null, aiAnalysisModel: string | null, aiAnalyzedAt: string | null, commanderBracket: number | null, commanderBracketEstimate: number | null, shareToken: string | null, coverDeckCardId: string | null, coverImageUrl: string | null, commanderColorIdentity: Array<string | null> | null, cardCount: number | null, location: { id: string, name: string, kind: string } | null, legality: { status: string, issues: Array<{ code: string, message: string, severity: string, cardName: string | null }> } } | null } | null };
 
 export type UpdateDeckMutationVariables = Exact<{
   id: string | number;
@@ -526,7 +526,7 @@ export type UpdateDeckMutationVariables = Exact<{
 }>;
 
 
-export type UpdateDeckMutation = { updateDeck: { deck: { id: string, name: string, kind: string, format: string, status: string, location: { id: string, name: string, kind: string } | null, playCount: number, skipCount: number, lastPlayedAt: string | null, primer: string | null, aiAnalysis: string | null, aiAnalysisModel: string | null, aiAnalyzedAt: string | null, commanderBracket: number | null, commanderBracketEstimate: number | null, shareToken: string | null, coverDeckCardId: string | null, coverImageUrl: string | null, commanderColorIdentity: Array<string | null> | null, cardCount: number | null, legality: { status: string, issues: Array<{ code: string, message: string, severity: string, cardName: string | null }> } } | null } | null };
+export type UpdateDeckMutation = { updateDeck: { deck: { id: string, name: string, kind: string, format: string, status: string, playCount: number, skipCount: number, lastPlayedAt: string | null, primer: string | null, aiAnalysis: string | null, aiAnalysisModel: string | null, aiAnalyzedAt: string | null, commanderBracket: number | null, commanderBracketEstimate: number | null, shareToken: string | null, coverDeckCardId: string | null, coverImageUrl: string | null, commanderColorIdentity: Array<string | null> | null, cardCount: number | null, location: { id: string, name: string, kind: string } | null, legality: { status: string, issues: Array<{ code: string, message: string, severity: string, cardName: string | null }> } } | null } | null };
 
 export type DeleteDeckMutationVariables = Exact<{
   id: string | number;
@@ -562,7 +562,7 @@ export type DeckQueryVariables = Exact<{
 }>;
 
 
-export type DeckQuery = { deck: { id: string, name: string, kind: string, format: string, status: string, location: { id: string, name: string, kind: string } | null, primer: string | null, aiAnalysis: string | null, aiAnalysisModel: string | null, aiAnalyzedAt: string | null, commanderBracket: number | null, commanderBracketEstimate: number | null, shareToken: string | null, coverDeckCardId: string | null, coverImageUrl: string | null, cardCount: number | null, commanderColorIdentity: Array<string | null> | null, legality: { status: string, issues: Array<{ code: string, message: string, severity: string, cardName: string | null }> }, tags: Array<{ id: string, name: string, color: string, targetCount: number | null, position: number, cardCount: number }>, deckCards: { pageInfo: { endCursor: string | null, hasNextPage: boolean }, edges: Array<{ node: { id: string, quantity: number, zone: string | null, finish: string | null, tag: string | null, tagIds: Array<string>, priceCents: number | null, card: { id: string, oracleId: string, name: string, typeLine: string | null, cmc: number | null, manaCost: string | null, oracleText: string | null, colors: Array<string | null> | null, colorIdentity: Array<string | null> | null, gameChanger: boolean, edhrecSaltiness: number | null, deckCategory: string | null, deckThemes: Array<string | null> | null } | null, preferredPrinting: { id: string, scryfallId: string, imageUrl: string | null, backImageUrl: string | null, artCropUrl: string | null, setCode: string | null, setName: string | null, collectorNumber: string | null, rarity: string | null, finishes: Array<string | null> | null } | null, fallbackPrinting: { id: string, scryfallId: string, imageUrl: string | null, backImageUrl: string | null, artCropUrl: string | null, setCode: string | null, setName: string | null, collectorNumber: string | null, rarity: string | null, finishes: Array<string | null> | null } | null, allocationStatus: { state: string, required: number, owned: number, allocated: number, proxyAllocated: number, available: number, allocatedElsewhere: number, missing: number, candidates: Array<{ allocated: number, allocatedElsewhere: number, available: number, item: { id: string, quantity: number, finish: string, condition: string, language: string, priceText: string | null, location: { id: string, name: string } | null, printing: { id: string, scryfallId: string, setCode: string | null, setName: string | null, collectorNumber: string | null, rarity: string | null, imageUrl: string | null, backImageUrl: string | null, artCropUrl: string | null, card: { name: string } | null } | null } }> } } | null } | null> | null } | null } | null };
+export type DeckQuery = { deck: { id: string, name: string, kind: string, format: string, status: string, primer: string | null, aiAnalysis: string | null, aiAnalysisModel: string | null, aiAnalyzedAt: string | null, commanderBracket: number | null, commanderBracketEstimate: number | null, shareToken: string | null, coverDeckCardId: string | null, coverImageUrl: string | null, cardCount: number | null, commanderColorIdentity: Array<string | null> | null, location: { id: string, name: string, kind: string } | null, legality: { status: string, issues: Array<{ code: string, message: string, severity: string, cardName: string | null }> }, tags: Array<{ id: string, name: string, color: string, targetCount: number | null, position: number, cardCount: number }>, deckCards: { pageInfo: { endCursor: string | null, hasNextPage: boolean }, edges: Array<{ node: { id: string, quantity: number, zone: string | null, finish: string | null, tag: string | null, tagIds: Array<string>, priceCents: number | null, card: { id: string, oracleId: string, name: string, typeLine: string | null, cmc: number | null, manaCost: string | null, oracleText: string | null, colors: Array<string | null> | null, colorIdentity: Array<string | null> | null, gameChanger: boolean, edhrecSaltiness: number | null, deckCategory: string | null, deckThemes: Array<string | null> | null } | null, preferredPrinting: { id: string, scryfallId: string, imageUrl: string | null, backImageUrl: string | null, artCropUrl: string | null, setCode: string | null, setName: string | null, collectorNumber: string | null, rarity: string | null, finishes: Array<string | null> | null } | null, fallbackPrinting: { id: string, scryfallId: string, imageUrl: string | null, backImageUrl: string | null, artCropUrl: string | null, setCode: string | null, setName: string | null, collectorNumber: string | null, rarity: string | null, finishes: Array<string | null> | null } | null, allocationStatus: { state: string, required: number, owned: number, allocated: number, proxyAllocated: number, available: number, allocatedElsewhere: number, missing: number, candidates: Array<{ allocated: number, allocatedElsewhere: number, available: number, item: { id: string, quantity: number, finish: string, condition: string, language: string, priceText: string | null, location: { id: string, name: string } | null, printing: { id: string, scryfallId: string, setCode: string | null, setName: string | null, collectorNumber: string | null, rarity: string | null, imageUrl: string | null, backImageUrl: string | null, artCropUrl: string | null, card: { name: string } | null } | null } }> } } | null } | null> | null } | null } | null };
 
 export type AnalyzeDeckMutationVariables = Exact<{
   id: string | number;

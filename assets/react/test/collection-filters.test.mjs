@@ -24,7 +24,7 @@ test("buildCollectionFilterQuery quotes and combines structured predicates", () 
 
   assert.equal(
     buildCollectionFilterQuery(filters),
-    'name:"Lightning Bolt" type:"instant (spell)" c:r id>=rg (rarity:rare or rarity:mythic) is:foil usd>=2.50',
+    'name:"Lightning Bolt" type:"instant (spell)" c:r id>=rg (rarity:rare or rarity:mythic) is:foil eur>=2.50',
   )
 })
 

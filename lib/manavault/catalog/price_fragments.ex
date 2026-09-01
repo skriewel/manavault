@@ -9,8 +9,9 @@ defmodule Manavault.Catalog.PriceFragments do
 
   alias Manavault.Catalog.Price
 
-  coalesce_sql = fn keys ->
-    "COALESCE(" <> Enum.map_join(keys, ", ", &"json_extract(?, '$.#{&1}')") <> ")"
+  coalesce_sql = fn
+    [key] -> "json_extract(?, '$.#{key}')"
+    keys -> "COALESCE(" <> Enum.map_join(keys, ", ", &"json_extract(?, '$.#{&1}')") <> ")"
   end
 
   vendor_order_sql = fn finishes ->

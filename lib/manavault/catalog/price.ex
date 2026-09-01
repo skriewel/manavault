@@ -173,10 +173,10 @@ defmodule Manavault.Catalog.Price do
       |> parse_cents()
 
     native_eur ||
-      (prices
-       |> first_present(usd_fallback_keys(finish))
-       |> parse_cents()
-       |> Manavault.Pricing.usd_cents_to_eur())
+      prices
+      |> first_present(usd_fallback_keys(finish))
+      |> parse_cents()
+      |> Manavault.Pricing.usd_cents_to_eur()
   end
 
   @doc "Ordered printing finishes to try for a current price."
@@ -259,7 +259,6 @@ defmodule Manavault.Catalog.Price do
         String.replace(value, ",", "")
     end
   end
-
 
   defp collection_items_sum_cents(items, price_fun) do
     Enum.reduce(List.wrap(items), 0, fn

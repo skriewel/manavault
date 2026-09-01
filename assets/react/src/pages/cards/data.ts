@@ -209,6 +209,7 @@ export const CardCollectionItemsDocument = graphql(`
           condition
           language
           finish
+          isProxy
           notes
           forTrade
           forTradeQuantity

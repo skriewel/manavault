@@ -43,7 +43,7 @@ test("bulk edit input validates selected purchase price", () => {
       updateFinish: false,
       updatePurchasePrice: true,
     }),
-    { ok: false, error: "Purchase price must be a dollar amount" },
+    { ok: false, error: "Purchase price must be a euro amount" },
   )
 })
 

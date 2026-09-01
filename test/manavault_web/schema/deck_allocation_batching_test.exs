@@ -365,7 +365,7 @@ defmodule ManavaultWeb.Schema.DeckAllocationBatchingTest do
             "art_crop" => "https://example.test/batched-location-#{index}-art.jpg"
           },
           "finishes" => ["nonfoil"],
-          "prices" => %{"usd" => "#{index}.00"},
+          "prices" => %{"eur" => "#{index}.00"},
           "legalities" => %{}
         }
       end

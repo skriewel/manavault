@@ -4,6 +4,7 @@ defmodule ManavaultWeb.Schema.PricingTest do
 
   alias Manavault.Pricing
   alias Manavault.Pricing.{Settings, VendorSyncWorker}
+  alias Manavault.Repo
 
   test "pricing settings expose EUR, Cardmarket, and ECB status", %{conn: conn} do
     assert {:ok, _settings} =

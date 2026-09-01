@@ -203,9 +203,9 @@ defmodule ManavaultWeb.Schema.LocationsAndImportsTest do
     assert %{"data" => %{"collectionExportCsv" => export_csv}} = json_response(export_conn, 200)
 
     assert export_csv =~
-             "Quantity,Card Name,Set Code,Collector Number,Finish,Condition,Language,Location,Purchase Price"
+             "Quantity,Card Name,Set Code,Collector Number,Finish,Condition,Language,Location,Proxy,Purchase Price"
 
-    assert export_csv =~ "3,Imported Card,imp,9,nonfoil,near_mint,en,Import Binder,€1"
+    assert export_csv =~ "3,Imported Card,imp,9,nonfoil,near_mint,en,Import Binder,No,€1"
 
     text_conn =
       post(conn, "/api/graphql", %{

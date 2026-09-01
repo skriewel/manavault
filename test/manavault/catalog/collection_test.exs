@@ -232,7 +232,7 @@ defmodule Manavault.Catalog.CollectionTest do
              Catalog.import_cards([@black_lotus, @time_walk])
 
     proxy = create_collection_item!("scryfall-printing-1", is_proxy: true)
-    real = create_collection_item!("scryfall-printing-2")
+    real = create_collection_item!("scryfall-printing-2", finish: "foil")
 
     assert [proxy_result] = Catalog.list_collection_items(q: "is:proxy")
     assert proxy_result.id == proxy.id

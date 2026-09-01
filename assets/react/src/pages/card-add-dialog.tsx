@@ -296,7 +296,7 @@ export function CardAddDialog(props: CardAddDialogProps) {
 
     const purchasePriceCents = parseCurrencyInputCents(purchasePrice)
     if (purchasePriceCents === undefined) {
-      return setError("Purchase price must be a dollar amount")
+      return setError("Purchase price must be a euro amount")
     }
 
     void createItemMutation({

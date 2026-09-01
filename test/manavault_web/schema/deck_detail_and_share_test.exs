@@ -169,7 +169,7 @@ defmodule ManavaultWeb.Schema.DeckDetailAndShareTest do
           "lang" => "en",
           "image_uris" => %{},
           "finishes" => ["nonfoil"],
-          "prices" => %{"usd" => "2.50"},
+          "prices" => %{"eur" => "2.50"},
           "released_at" => "2024-02-03",
           "legalities" => %{"commander" => "legal", "modern" => "not_legal"},
           "rulings_uri" => rulings_uri,
@@ -480,7 +480,7 @@ defmodule ManavaultWeb.Schema.DeckDetailAndShareTest do
                    "setCode" => "shr",
                    "collectorNumber" => "9",
                    "totalPriceCents" => 500,
-                   "totalPriceText" => "$5"
+                   "totalPriceText" => "€5"
                  }
                ],
                "deckBuylistExport" => "2 Shared Card (SHR 9)"
@@ -599,8 +599,8 @@ defmodule ManavaultWeb.Schema.DeckDetailAndShareTest do
                          "imageUrl" => nil,
                          "artCropUrl" => nil,
                          "releasedAt" => "2024-02-03",
-                         "prices" => %{"usd" => "2.50"},
-                         "priceText" => "$2.50"
+                         "prices" => %{"eur" => "2.50"},
+                         "priceText" => "€2.50"
                        }
                      }
                    ]

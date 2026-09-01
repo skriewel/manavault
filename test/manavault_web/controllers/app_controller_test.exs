@@ -31,7 +31,7 @@ defmodule ManavaultWeb.AppControllerTest do
     assert response =~ ~s|property="og:title" content="Lotus Lessons · ManaVault"|
 
     assert response =~
-             ~s|property="og:description" content="Commander deck, 100 cards, Legal, $256.76."|
+             ~s|property="og:description" content="Commander deck, 100 cards, Legal, €256."|
 
     refute response =~ "unique"
 
@@ -94,7 +94,7 @@ defmodule ManavaultWeb.AppControllerTest do
     assert response =~ "100 cards"
     refute response =~ "unique"
     assert response =~ "Legal"
-    assert response =~ "$256.76"
+    assert response =~ "€256"
     assert response =~ "data:image/svg+xml"
     assert response =~ ~s(<clipPath id="cardClip">)
     assert response =~ ~s|clip-path="url(#cardClip)"|
@@ -196,7 +196,7 @@ defmodule ManavaultWeb.AppControllerTest do
           "oracle_id" => "oracle-preview-commander",
           "name" => "Lotus Tutor",
           "image_uris" => %{"art_crop" => preview_cover_data_uri()},
-          "prices" => %{"usd" => "256.76"}
+          "prices" => %{"eur" => "256.76"}
         }),
         Map.merge(CatalogTestSupport.legal_plains(), %{
           "id" => "scryfall-preview-plains",

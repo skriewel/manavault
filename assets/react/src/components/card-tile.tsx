@@ -1,7 +1,7 @@
 import {
   ArrowLeftRight,
   CheckSquare,
-  DollarSign,
+  Euro,
   Edit3,
   Layers,
   ListPlus,
@@ -434,8 +434,8 @@ export function CardTile({
                 </span>
                 {price ? (
                   <span className="flex shrink-0 items-center gap-1 font-mono text-white/90">
-                    <DollarSign className="h-3.5 w-3.5" />
-                    {String(price).replace(/^\$/, "")}
+                    <Euro className="h-3.5 w-3.5" />
+                    {String(price).replace(/^€/, "")}
                   </span>
                 ) : null}
               </div>
@@ -478,7 +478,7 @@ export function CardTile({
               ) : null}
               {price ? (
                 <span className="shrink-0 font-mono font-bold text-base-content">
-                  {String(price).startsWith("$") ? price : `$${price}`}
+                  {String(price).startsWith("€") ? price : `€${price}`}
                 </span>
               ) : null}
             </div>
