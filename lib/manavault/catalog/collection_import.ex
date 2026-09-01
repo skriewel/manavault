@@ -240,7 +240,6 @@ defmodule Manavault.Catalog.CollectionImport do
       when key in [
              "purchase_price",
              "purchase_price_eur",
-             "purchase_price_usd",
              "price_paid",
              "paid"
            ] ->
