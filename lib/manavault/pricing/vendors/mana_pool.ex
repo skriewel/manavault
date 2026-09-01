@@ -29,6 +29,7 @@ defmodule Manavault.Pricing.Vendors.ManaPool do
   @named_special_treatments ~w(gilded invisibleink neonink oilslick serialized stepandcompleat textured)
 
   def vendor, do: "manapool"
+  def currency, do: :usd
 
   def sync_interval, do: :timer.hours(6)
 
