@@ -8,7 +8,7 @@ defmodule Manavault.Trade.CollectionCheckTest do
   alias Manavault.Trade.Lists
 
   test "summarizes cards ready to pull, allocated elsewhere, missing, and estimated cost" do
-    cheap_lotus = %{@black_lotus_beta | "prices" => %{"usd" => "10.00"}}
+    cheap_lotus = %{@black_lotus_beta | "prices" => %{"eur" => "10.00"}}
 
     assert {:ok, _counts} =
              Catalog.import_cards([@black_lotus, cheap_lotus, @time_walk, @plains])
@@ -42,7 +42,7 @@ defmodule Manavault.Trade.CollectionCheckTest do
     assert result.unavailable_quantity == 1
     assert result.missing_quantity == 2
     assert result.estimated_cost_cents == 2_500
-    assert result.estimated_cost_text == "$25"
+    assert result.estimated_cost_text == "€25"
     assert result.unpriced_quantity == 0
     assert result.unrecognized == ["Unknown Card"]
 
