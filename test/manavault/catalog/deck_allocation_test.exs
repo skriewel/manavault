@@ -419,7 +419,7 @@ defmodule Manavault.Catalog.DeckAllocationTest do
     card =
       @black_lotus
       |> Map.put("finishes", ["nonfoil", "foil"])
-      |> Map.put("prices", %{"usd" => "1.00", "usd_foil" => "2.00"})
+      |> Map.put("prices", %{"eur" => "1.00", "eur_foil" => "2.00"})
 
     assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([card])
 
