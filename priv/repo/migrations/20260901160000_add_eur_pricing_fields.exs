@@ -16,6 +16,6 @@ defmodule Manavault.Repo.Migrations.AddEurPricingFields do
     # Existing vendor_prices were stored in the source vendor's currency
     # (currently USD). From this migration onward the table always stores EUR
     # cents, so derived vendor cache rows must be rebuilt.
-    execute("DELETE FROM vendor_prices")
+    execute("DELETE FROM vendor_prices", "SELECT 1")
   end
 end
