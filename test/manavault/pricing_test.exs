@@ -8,7 +8,9 @@ defmodule Manavault.PricingTest do
   alias Manavault.Pricing.{ExchangeRate, Money, Settings, Store, Sync, VendorPrice}
   alias Manavault.Pricing.Vendors.{CardKingdom, CardMarket, ManaPool, TcgTracking}
 
-  @mana_pool_stub __MODULE__
+  @mana_pool_stub {__MODULE__, :mana_pool}
+  @cardmarket_stub {__MODULE__, :cardmarket}
+  @ecb_stub {__MODULE__, :ecb}
 
   describe "Money.to_cents/1" do
     test "parses decimal currency strings" do
@@ -147,6 +149,29 @@ defmodule Manavault.PricingTest do
                %{scryfall_id: "scryfall-42", finish: "nonfoil", price_cents: 375}
              ]
     end
+
+    test "fetch joins the public guide through imported Scryfall cardmarket_id" do
+      card = Map.put(@black_lotus, "cardmarket_id", 77_777)
+      assert {:ok, _counts} = Catalog.import_cards([card])
+
+      body = %{
+        "priceGuides" => [
+          %{"idProduct" => 77_777, "trend" => 4.25, "trend-foil" => 6.50}
+        ]
+      }
+
+      Req.Test.stub(@cardmarket_stub, fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, Jason.encode!(body))
+      end)
+
+      assert MapSet.new(CardMarket.fetch(plug: {Req.Test, @cardmarket_stub}) |> elem(1)) ==
+               MapSet.new([
+                 %{scryfall_id: @black_lotus["id"], finish: "nonfoil", price_cents: 425},
+                 %{scryfall_id: @black_lotus["id"], finish: "foil", price_cents: 650}
+               ])
+    end
   end
 
   describe "ExchangeRate" do
@@ -160,6 +185,17 @@ defmodule Manavault.PricingTest do
       """
 
       assert ExchangeRate.parse(xml) ==
+               {:ok, %{usd_per_eur: 1.1723, date: ~D[2026-09-01]}}
+    end
+
+    test "fetch accepts the ECB daily XML response" do
+      xml = "<Cube><Cube time=\"2026-09-01\"><Cube currency=\"USD\" rate=\"1.1723\"/></Cube></Cube>"
+
+      Req.Test.stub(@ecb_stub, fn conn ->
+        Plug.Conn.send_resp(conn, 200, xml)
+      end)
+
+      assert ExchangeRate.fetch(plug: {Req.Test, @ecb_stub}) ==
                {:ok, %{usd_per_eur: 1.1723, date: ~D[2026-09-01]}}
     end
   end
