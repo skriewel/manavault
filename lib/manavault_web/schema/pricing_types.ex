@@ -5,6 +5,10 @@ defmodule ManavaultWeb.Schema.PricingTypes do
   object :pricing_settings do
     field :source, non_null(:string)
     field :sources, non_null(list_of(non_null(:string)))
+    field :currency, non_null(:string)
+    field :usd_per_eur, :float
+    field :fx_rate_date, :string
+    field :fx_source, non_null(:string)
     field :vendors, non_null(list_of(non_null(:pricing_vendor_status)))
   end
 
