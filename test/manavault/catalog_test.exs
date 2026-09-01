@@ -284,4 +284,15 @@ defmodule Manavault.CatalogTest do
     assert 1 = Catalog.count_locations()
     assert 1 = Catalog.count_decks()
   end
+
+  test "physical collection locations support tuck boxes and sealed products" do
+    assert {:ok, tuck_box} =
+             Catalog.create_location(%{"name" => "Vintage Precon", "kind" => "tuck_box"})
+
+    assert {:ok, sealed_product} =
+             Catalog.create_location(%{"name" => "Sealed Precon", "kind" => "sealed_product"})
+
+    assert tuck_box.kind == "tuck_box"
+    assert sealed_product.kind == "sealed_product"
+  end
 end
