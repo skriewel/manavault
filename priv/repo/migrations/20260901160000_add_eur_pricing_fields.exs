@@ -12,5 +12,10 @@ defmodule Manavault.Repo.Migrations.AddEurPricingFields do
       add :usd_per_eur, :float
       add :fx_rate_date, :date
     end
+
+    # Existing vendor_prices were stored in the source vendor's currency
+    # (currently USD). From this migration onward the table always stores EUR
+    # cents, so derived vendor cache rows must be rebuilt.
+    execute("DELETE FROM vendor_prices")
   end
 end
