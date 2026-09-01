@@ -669,7 +669,7 @@ defmodule Manavault.Catalog.CollectionTest do
                "finish" => "nonfoil"
              })
 
-    assert [lotus.id] == collection_item_ids(q: "t:artifact mv=0 id:c usd>999")
+    assert [lotus.id] == collection_item_ids(q: "t:artifact mv=0 id:c eur>999")
     assert [walk.id] == collection_item_ids(q: "set:lea number:84 lang:ja is:foil")
     assert [plains.id] == collection_item_ids(q: "rarity:common type:land")
     assert [lotus.id, walk.id] == collection_item_ids(q: ~s(lotus or "time walk"))
@@ -679,7 +679,7 @@ defmodule Manavault.Catalog.CollectionTest do
     assert Catalog.count_collection_items(q: "rarity>=rare") == 2
     assert [] == Catalog.list_collection_items(q: "artist:Someone")
 
-    assert [lotus_card] = Catalog.search_cards("type:artifact rarity:rare usd>999")
+    assert [lotus_card] = Catalog.search_cards("type:artifact rarity:rare eur>999")
     assert lotus_card.oracle_id == "oracle-1"
 
     assert [walk_card] = Catalog.search_cards(~s("time walk" is:foil lang:ja))
@@ -818,7 +818,7 @@ defmodule Manavault.Catalog.CollectionTest do
   end
 
   test "collection item sorting supports quantity, price, value gain, and added date" do
-    time_walk = Map.put(@time_walk, "prices", %{"usd_foil" => "5.00"})
+    time_walk = Map.put(@time_walk, "prices", %{"eur_foil" => "5.00"})
 
     assert {:ok, %{cards_count: 2, printings_count: 2}} =
              Catalog.import_cards([@black_lotus, time_walk])
@@ -1432,7 +1432,7 @@ defmodule Manavault.Catalog.CollectionTest do
       "lang" => "en",
       "rarity" => rarity,
       "finishes" => ["nonfoil"],
-      "prices" => %{"usd" => price},
+      "prices" => %{"eur" => price},
       "released_at" => "2026-01-01"
     }
   end
