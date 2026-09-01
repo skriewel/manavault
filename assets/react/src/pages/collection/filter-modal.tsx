@@ -251,7 +251,7 @@ export function CollectionFilterModal({
                   </div>
                 </FilterSection>
 
-                <FilterSection label="USD price" syntax="usd<10">
+                <FilterSection label="EUR price" syntax="eur<10">
                   <ComparisonFilterControl
                     inputMode="decimal"
                     operator={draft.priceOperator}
