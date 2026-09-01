@@ -646,13 +646,13 @@ function ImportSpendSummary({
 
 function purchaseAmountError(mode: CollectionImportPurchaseMode) {
   return mode === "total_spend"
-    ? "Total amount spent must be a dollar amount"
-    : "Purchase price must be a dollar amount"
+    ? "Total amount spent must be a euro amount"
+    : "Purchase price must be a euro amount"
 }
 
 function importPurchasePriceText(cents?: number | null) {
   if (typeof cents !== "number" || !Number.isFinite(cents)) return "-"
-  return `$${centsToCurrencyInput(cents)}`
+  return `€${centsToCurrencyInput(cents)}`
 }
 
 export function ExportCollectionDialog({
