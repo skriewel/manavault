@@ -158,7 +158,7 @@ export function CollectionAutoSortRuleDialog({
 
             <div className="grid gap-4 md:grid-cols-2">
               <Field
-                label="Minimum price"
+                label="Minimum price (EUR)"
                 htmlFor={`${fieldId}-min-price`}
                 help="Blank means no minimum."
               >
@@ -172,7 +172,7 @@ export function CollectionAutoSortRuleDialog({
               </Field>
 
               <Field
-                label="Maximum price"
+                label="Maximum price (EUR)"
                 htmlFor={`${fieldId}-max-price`}
                 help="Blank means no maximum."
               >
