@@ -13,7 +13,15 @@ defmodule Manavault.Pricing do
   import Ecto.Query
 
   alias Manavault.Catalog.Cache
-  alias Manavault.Pricing.{ExchangeRate, Money, Settings, Store, Sync, VendorPrice, VendorSyncWorker}
+  alias Manavault.Pricing.{
+    ExchangeRate,
+    Money,
+    Settings,
+    Store,
+    Sync,
+    VendorPrice,
+    VendorSyncWorker
+  }
   alias Manavault.Repo
 
   @singleton_id 1
