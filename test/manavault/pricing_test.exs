@@ -116,12 +116,12 @@ defmodule Manavault.PricingTest do
           %{
             "idProduct" => 12_345,
             "trend" => 10.25,
-            "trend-foil" => 14.50
+            "trend-holo" => 14.50
           },
           %{
             "idProduct" => 99_999,
             "trend" => 1.00,
-            "trend-foil" => 2.00
+            "trend-holo" => 2.00
           }
         ]
       }
@@ -141,7 +141,7 @@ defmodule Manavault.PricingTest do
       body =
         Jason.encode!(%{
           "priceGuides" => [
-            %{"idProduct" => "42", "trend" => "3.75", "trend-foil" => 0}
+            %{"idProduct" => "42", "trend" => "3.75", "trend-holo" => 0}
           ]
         })
 
@@ -156,7 +156,7 @@ defmodule Manavault.PricingTest do
 
       body = %{
         "priceGuides" => [
-          %{"idProduct" => 77_777, "trend" => 4.25, "trend-foil" => 6.50}
+          %{"idProduct" => 77_777, "trend" => 4.25, "trend-holo" => 6.50}
         ]
       }
 
