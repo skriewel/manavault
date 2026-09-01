@@ -10,11 +10,12 @@ defmodule Manavault.Pricing.Sync do
   require Logger
 
   alias Manavault.Catalog.Cache
-  alias Manavault.Pricing.{Store, VendorPrice}
-  alias Manavault.Pricing.Vendors.{CardKingdom, ManaPool, TcgTracking}
+  alias Manavault.Pricing.{Money, Store, VendorPrice}
+  alias Manavault.Pricing.Vendors.{CardKingdom, CardMarket, ManaPool, TcgTracking}
   alias Manavault.Repo
 
   @vendor_modules %{
+    "cardmarket" => CardMarket,
     "cardkingdom" => CardKingdom,
     "manapool" => ManaPool,
     "tcgplayer" => TcgTracking
@@ -30,9 +31,19 @@ defmodule Manavault.Pricing.Sync do
   `{vendor, {:ok, count} | {:error, reason}}`.
   """
   def run(vendors) do
+    fx_settings =
+      if Enum.any?(vendors, &(vendor_module(&1).currency() == :usd)) do
+        case Manavault.Pricing.refresh_exchange_rate() do
+          {:ok, settings} -> settings
+          {:error, _reason} -> Manavault.Pricing.settings()
+        end
+      else
+        Manavault.Pricing.settings()
+      end
+
     results =
       Enum.map(vendors, fn vendor ->
-        {vendor, sync_vendor(vendor)}
+        {vendor, sync_vendor(vendor, fx_settings.usd_per_eur)}
       end)
 
     Store.refresh()
@@ -78,19 +89,29 @@ defmodule Manavault.Pricing.Sync do
     %{upserted: length(deduped), deleted: deleted}
   end
 
-  defp sync_vendor(vendor) do
+  defp sync_vendor(vendor, usd_per_eur) do
     module = vendor_module(vendor)
     Logger.info("Vendor price sync started vendor=#{vendor}")
 
     case module.fetch() do
       {:ok, rows} when rows != [] ->
-        %{upserted: upserted, deleted: deleted} = replace_vendor_prices(vendor, rows)
+        case normalize_currency(rows, module.currency(), usd_per_eur) do
+          {:ok, rows} ->
+            %{upserted: upserted, deleted: deleted} = replace_vendor_prices(vendor, rows)
 
-        Logger.info(
-          "Vendor price sync completed vendor=#{vendor} prices=#{upserted} removed=#{deleted}"
-        )
+            Logger.info(
+              "Vendor price sync completed vendor=#{vendor} prices=#{upserted} removed=#{deleted}"
+            )
 
-        {:ok, upserted}
+            {:ok, upserted}
+
+          {:error, reason} ->
+            Logger.warning(
+              "Vendor price sync failed vendor=#{vendor} error=#{inspect(reason)}"
+            )
+
+            {:error, reason}
+        end
 
       {:ok, []} ->
         Logger.warning(
@@ -104,6 +125,21 @@ defmodule Manavault.Pricing.Sync do
         {:error, reason}
     end
   end
+
+  defp normalize_currency(rows, :eur, _usd_per_eur), do: {:ok, rows}
+
+  defp normalize_currency(rows, :usd, usd_per_eur)
+       when is_number(usd_per_eur) and usd_per_eur > 0 do
+    {:ok,
+     Enum.flat_map(rows, fn row ->
+       case Money.usd_cents_to_eur(row.price_cents, usd_per_eur) do
+         cents when is_integer(cents) and cents > 0 -> [Map.put(row, :price_cents, cents)]
+         _invalid -> []
+       end
+     end)}
+  end
+
+  defp normalize_currency(_rows, :usd, _usd_per_eur), do: {:error, :exchange_rate_unavailable}
 
   defp dedupe_cheapest(rows) do
     rows
