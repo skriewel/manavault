@@ -60,7 +60,7 @@ defmodule Manavault.Catalog.ImportTest do
            } = Repo.get!(Card, "oracle-1")
 
     assert %Printing{prices: prices} = Repo.get!(Printing, "scryfall-printing-1")
-    assert Jason.decode!(prices) == %{"usd" => "1.00"}
+    assert Jason.decode!(prices) == %{"usd" => "1.00", "eur" => "1.00"}
   end
 
   test "import_cards excludes memorabilia and token set printings" do
