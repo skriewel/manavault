@@ -178,10 +178,10 @@ export function formRowsToAutoSortRuleInput(
     if (!row.targetLocationId) return `${name}: choose a box or binder destination.`
 
     const minPriceCents = parseCurrencyInputCents(row.minPrice)
-    if (minPriceCents === undefined) return `${name}: minimum price must be a dollar amount.`
+    if (minPriceCents === undefined) return `${name}: minimum price must be a euro amount.`
 
     const maxPriceCents = parseCurrencyInputCents(row.maxPrice)
-    if (maxPriceCents === undefined) return `${name}: maximum price must be a dollar amount.`
+    if (maxPriceCents === undefined) return `${name}: maximum price must be a euro amount.`
 
     if (
       typeof minPriceCents === "number" &&
@@ -351,15 +351,23 @@ export function criteriaSummary(row: AutoSortRuleFormRow) {
 }
 
 export function parseCurrencyInputCents(value: string) {
-  const normalized = value.trim().replaceAll(",", "").replace(/^\$/, "")
+  let normalized = value.trim().replace(/[€$\s]/g, "")
   if (!normalized) return null
+
+  if (/^\d{1,3}(?:\.\d{3})+,\d{1,2}$/.test(normalized)) {
+    normalized = normalized.replaceAll(".", "").replace(",", ".")
+  } else if (/^\d+,\d{1,2}$/.test(normalized)) {
+    normalized = normalized.replace(",", ".")
+  } else {
+    normalized = normalized.replaceAll(",", "")
+  }
 
   const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(normalized)
   if (!match) return undefined
 
-  const dollars = Number(match[1])
+  const euros = Number(match[1])
   const cents = Number((match[2] || "").padEnd(2, "0"))
-  return dollars * 100 + cents
+  return euros * 100 + cents
 }
 
 export function centsToCurrencyInput(cents?: number | null) {
@@ -434,12 +442,12 @@ function colorModeSummary(row: AutoSortRuleFormRow) {
 }
 
 function priceSummary(row: AutoSortRuleFormRow) {
-  const minPrice = row.minPrice.trim().replace(/^\$/, "") || null
-  const maxPrice = row.maxPrice.trim().replace(/^\$/, "") || null
+  const minPrice = row.minPrice.trim().replace(/^[€$]/, "") || null
+  const maxPrice = row.maxPrice.trim().replace(/^[€$]/, "") || null
 
-  if (minPrice && maxPrice) return `$${minPrice}-$${maxPrice}`
-  if (minPrice) return `≥ $${minPrice}`
-  if (maxPrice) return `≤ $${maxPrice}`
+  if (minPrice && maxPrice) return `€${minPrice}-€${maxPrice}`
+  if (minPrice) return `≥ €${minPrice}`
+  if (maxPrice) return `≤ €${maxPrice}`
   return null
 }
 
