@@ -6,8 +6,68 @@ defmodule Manavault.Catalog.DeckLegalityTest do
 
   alias Manavault.Catalog.{
     Card,
-    DeckCard
+    Deck,
+    DeckCard,
+    DeckLegality,
+    Printing
   }
+
+  test "casual legality does not require a Scryfall casual legality key" do
+    deck = %Deck{
+      format: "casual",
+      deck_cards: [
+        %DeckCard{
+          oracle_id: "casual-card",
+          quantity: 60,
+          zone: "mainboard",
+          card: %Card{name: "Casual Card", legalities: %{}}
+        }
+      ]
+    }
+
+    assert %{status: "legal", issues: []} = DeckLegality.evaluate(deck)
+  end
+
+  test "limited legality accepts at least 40 cards from a common set with no copy limit" do
+    deck = %Deck{
+      format: "limited",
+      deck_cards: [
+        limited_deck_card("Draft Common", 20, ["tst", "old"]),
+        limited_deck_card("Draft Uncommon", 20, ["tst"])
+      ]
+    }
+
+    assert %{status: "legal", issues: []} = DeckLegality.evaluate(deck)
+  end
+
+  test "limited legality rejects decks below 40 cards" do
+    deck = %Deck{
+      format: "limited",
+      deck_cards: [
+        limited_deck_card("Draft Common", 39, ["tst"])
+      ]
+    }
+
+    legality = DeckLegality.evaluate(deck)
+
+    assert legality.status == "illegal"
+    assert issue_by_code(legality, "limited_deck_size").message =~ "this deck has 39"
+  end
+
+  test "limited legality rejects decks without a common set" do
+    deck = %Deck{
+      format: "limited",
+      deck_cards: [
+        limited_deck_card("Set A Card", 20, ["aaa"]),
+        limited_deck_card("Set B Card", 20, ["bbb"])
+      ]
+    }
+
+    legality = DeckLegality.evaluate(deck)
+
+    assert legality.status == "illegal"
+    assert issue_by_code(legality, "limited_set").message =~ "no single set"
+  end
 
   test "deck legality accepts legal commander deck with repeated basic lands" do
     assert {:ok, %{cards_count: 2, printings_count: 2}} =
@@ -335,6 +395,21 @@ defmodule Manavault.Catalog.DeckLegalityTest do
     assert issue.card_name == nil
     assert issue.message =~ "use GW"
     assert issue.message =~ "1 chosen color"
+  end
+
+  defp limited_deck_card(name, quantity, set_codes) do
+    oracle_id = name |> String.downcase() |> String.replace(~r/[^a-z0-9]+/, "-")
+
+    %DeckCard{
+      oracle_id: oracle_id,
+      quantity: quantity,
+      zone: "mainboard",
+      card: %Card{
+        oracle_id: oracle_id,
+        name: name,
+        printings: Enum.map(set_codes, &%Printing{set_code: &1})
+      }
+    }
   end
 
   defp commander_deck!(name) do
