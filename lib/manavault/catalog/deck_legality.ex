@@ -1,9 +1,11 @@
 defmodule Manavault.Catalog.DeckLegality do
   @moduledoc false
 
-  alias Manavault.Catalog.{Card, CommanderRules, Deck, DeckCard}
+  alias Manavault.Catalog.{Card, CommanderRules, Deck, DeckCard, Printing}
 
   @commander_format "commander"
+  @casual_format "casual"
+  @limited_format "limited"
   @legal_status "legal"
 
   def evaluate(%Deck{} = deck) do
@@ -11,7 +13,8 @@ defmodule Manavault.Catalog.DeckLegality do
 
     issues =
       card_legality_issues(deck, counted_cards) ++
-        commander_issues(deck, counted_cards)
+        commander_issues(deck, counted_cards) ++
+        limited_issues(deck, counted_cards)
 
     %{
       status: status(issues),
@@ -24,6 +27,10 @@ defmodule Manavault.Catalog.DeckLegality do
   end
 
   defp counted_cards(_deck), do: []
+
+  defp card_legality_issues(%Deck{format: format}, _deck_cards)
+       when format in [@casual_format, @limited_format],
+       do: []
 
   defp card_legality_issues(%Deck{format: format}, deck_cards) do
     deck_cards
@@ -49,6 +56,60 @@ defmodule Manavault.Catalog.DeckLegality do
       end
     end)
   end
+
+  defp limited_issues(%Deck{format: @limited_format}, deck_cards) do
+    limited_deck_size_issues(deck_cards) ++ limited_set_issues(deck_cards)
+  end
+
+  defp limited_issues(_deck, _deck_cards), do: []
+
+  defp limited_deck_size_issues(deck_cards) do
+    count = Enum.reduce(deck_cards, 0, &(&1.quantity + &2))
+
+    if count >= 40 do
+      []
+    else
+      [
+        issue(
+          "limited_deck_size",
+          "Limited decks must contain at least 40 counted cards; this deck has #{count}."
+        )
+      ]
+    end
+  end
+
+  defp limited_set_issues([]), do: []
+
+  defp limited_set_issues(deck_cards) do
+    common_sets =
+      deck_cards
+      |> Enum.map(&card_set_codes/1)
+      |> Enum.reduce(fn set_codes, common ->
+        MapSet.intersection(common, set_codes)
+      end)
+
+    if MapSet.size(common_sets) > 0 do
+      []
+    else
+      [
+        issue(
+          "limited_set",
+          "Limited decks must contain cards that all occur in at least one common set; no single set contains every counted card in this deck."
+        )
+      ]
+    end
+  end
+
+  defp card_set_codes(%DeckCard{card: %Card{printings: printings}}) when is_list(printings) do
+    printings
+    |> Enum.flat_map(fn
+      %Printing{set_code: set_code} when is_binary(set_code) and set_code != "" -> [set_code]
+      _printing -> []
+    end)
+    |> MapSet.new()
+  end
+
+  defp card_set_codes(_deck_card), do: MapSet.new()
 
   defp commander_issues(%Deck{format: @commander_format}, deck_cards) do
     deck_size_issues(deck_cards) ++
