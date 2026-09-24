@@ -452,9 +452,12 @@ export function DecksPage() {
       onCompleted: () =>
         showToast(`Deleted ${deletingDeck.kind === "cube" ? "cube" : "deck"} ${deckName}`),
       onError: () =>
-        showToast(`Could not delete ${deletingDeck.kind === "cube" ? "cube" : "deck"} ${deckName}`, {
-          tone: "error",
-        }),
+        showToast(
+          `Could not delete ${deletingDeck.kind === "cube" ? "cube" : "deck"} ${deckName}`,
+          {
+            tone: "error",
+          },
+        ),
     }).catch(() => undefined)
     if (editingDeck?.id === deletingDeck.id) setEditingDeck(null)
     if (sharingDeck?.id === deletingDeck.id) setSharingDeck(null)
