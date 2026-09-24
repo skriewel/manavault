@@ -53,6 +53,22 @@ defmodule Manavault.Pricing.Store do
     ArgumentError -> nil
   end
 
+  def usd_per_eur do
+    case :ets.lookup(@table, :usd_per_eur) do
+      [{:usd_per_eur, rate}] -> rate
+      [] -> nil
+    end
+  rescue
+    ArgumentError -> nil
+  end
+
+  def set_usd_per_eur(rate) when is_number(rate) and rate > 0 do
+    case Process.whereis(__MODULE__) do
+      nil -> :not_started
+      pid -> GenServer.call(pid, {:set_usd_per_eur, rate})
+    end
+  end
+
   @doc "Rebuild the table from the database. No-op when the store is not running."
   def refresh(timeout \\ :timer.seconds(60)) do
     case Process.whereis(__MODULE__) do
@@ -79,8 +95,14 @@ defmodule Manavault.Pricing.Store do
     {:reply, :ok, state}
   end
 
+  def handle_call({:set_usd_per_eur, rate}, _from, state) do
+    :ets.insert(@table, {:usd_per_eur, rate})
+    {:reply, :ok, state}
+  end
+
   defp load do
-    source = Manavault.Pricing.settings().source
+    settings = Manavault.Pricing.settings()
+    source = settings.source
 
     :ets.delete_all_objects(@table)
 
@@ -96,6 +118,7 @@ defmodule Manavault.Pricing.Store do
 
     :ets.insert(@table, entries)
     :ets.insert(@table, {:source, source})
+    :ets.insert(@table, {:usd_per_eur, settings.usd_per_eur})
 
     Logger.debug("Pricing store loaded source=#{source} prices=#{length(entries)}")
   end
