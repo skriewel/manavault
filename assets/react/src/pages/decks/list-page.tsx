@@ -23,13 +23,8 @@ import {
 import { DeckNameWithCommanderIdentity, groupDecksByFormat } from "./deck-list-model"
 import { DeckPlayHistory, RandomDeckDialog } from "./deck-picker"
 import { ShareDeckDialog } from "./deck-share-dialogs"
-import {
-  flattenDecks,
-  partitionDecksByArchive,
-  partitionDecksByKind,
-  type DeckSummary,
-} from "./deck-types"
-import { DecksDocument, DeleteDeckDocument } from "./queries"
+import { flattenDecks, partitionDecksByArchive, type DeckSummary } from "./deck-types"
+import { DecksDocument, DeleteDeckDocument } from "./deck-list-documents"
 
 function DeckGalleryHeader({
   canPickDeck,
@@ -45,9 +40,9 @@ function DeckGalleryHeader({
   return (
     <header className="mb-8 flex flex-col gap-5 border-b border-base-300 pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-4xl font-black tracking-normal">Decks & Cubes</h1>
+        <h1 className="text-4xl font-black tracking-normal">Decks</h1>
         <p className="mt-3 max-w-3xl text-base text-base-content/70">
-          Browse decks and cubes, then open a list to tune exact printings and card allocations.
+          Browse your deck gallery, then open a list to tune exact printings and card allocations.
         </p>
       </div>
       <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:flex-nowrap">
@@ -72,7 +67,7 @@ function DeckGalleryHeader({
         </Button>
         <Button type="button" className="min-w-36 flex-1 sm:flex-none" onClick={onNewDeck}>
           <Plus className="h-4 w-4" />
-          New deck or cube
+          New deck
         </Button>
       </div>
     </header>
@@ -152,20 +147,11 @@ function DeckGalleryErrorState({ onRetry }: { onRetry: () => void }) {
 type DeckReadiness = {
   label: string
   tone: "neutral" | "primary" | "success" | "warning" | "error"
-  detail?: string
+  detail: string
   detailTone: "neutral" | "primary" | "success" | "warning" | "error"
 }
 
 function deckReadiness(deck: DeckSummary): DeckReadiness {
-  if (deck.kind === "cube") {
-    return {
-      label: titleize(deck.status),
-      tone: deck.status === "archived" ? "neutral" : "success",
-      detail: deck.status === "archived" ? "Allocations retained" : undefined,
-      detailTone: deck.status === "archived" ? "neutral" : "primary",
-    }
-  }
-
   const issueCount = deckLegalityIssueCount(deck.legality)
 
   if (deck.legality?.status !== "legal") {
@@ -189,7 +175,7 @@ function DeckReadinessBadges({ readiness }: { readiness: DeckReadiness }) {
   return (
     <div className="flex flex-wrap items-center gap-2 leading-none">
       <Badge tone={readiness.tone}>{readiness.label}</Badge>
-      {readiness.detail ? <Badge tone={readiness.detailTone}>{readiness.detail}</Badge> : null}
+      <Badge tone={readiness.detailTone}>{readiness.detail}</Badge>
     </div>
   )
 }
@@ -217,8 +203,7 @@ function DeckGalleryCard({
           fallback={<Layers className="h-12 w-12" />}
           typeLine={
             <div className="flex flex-wrap items-center gap-2">
-              <Badge>{deck.kind === "cube" ? "Cube" : titleize(deck.format)}</Badge>
-              {deck.location ? <Badge>{deck.location.name}</Badge> : null}
+              <Badge>{titleize(deck.format)}</Badge>
               {deck.status === "archived" ? <Badge>Archived</Badge> : null}
             </div>
           }
@@ -226,63 +211,22 @@ function DeckGalleryCard({
           detailLine={
             <div className="flex flex-wrap items-center gap-2 leading-none">
               <DeckReadinessBadges readiness={readiness} />
-              {deck.kind === "deck" ? <DeckBracketBadge deck={deck} /> : null}
+              <DeckBracketBadge deck={deck} />
             </div>
           }
           nameLine={
-            <DeckNameWithCommanderIdentity
-              colors={deck.kind === "deck" ? deck.commanderColorIdentity : []}
-              name={deck.name}
-            />
+            <DeckNameWithCommanderIdentity colors={deck.commanderColorIdentity} name={deck.name} />
           }
         />
       </Link>
       <SummaryActionMenu
-        entityKind={deck.kind === "cube" ? "cube" : "deck"}
         label={`${deck.name} actions`}
-        onCombos={deck.kind === "deck" ? onCombos : undefined}
+        onCombos={onCombos}
         onEdit={onEdit}
         onShare={onShare}
         onDelete={onDelete}
       />
     </div>
-  )
-}
-
-function CubeSection({
-  cubes,
-  onDelete,
-  onEdit,
-  onShare,
-  title = "Cubes",
-}: {
-  cubes: DeckSummary[]
-  onDelete: (deck: DeckSummary) => void
-  onEdit: (deck: DeckSummary) => void
-  onShare: (deck: DeckSummary) => void
-  title?: string
-}) {
-  if (!cubes.length) return null
-
-  return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-black tracking-normal">{title}</h2>
-        <span className="badge border-transparent bg-base-200 text-sm">{cubes.length}</span>
-      </div>
-      <div className="grid gap-5 md:grid-cols-2">
-        {cubes.map((cube) => (
-          <DeckGalleryCard
-            key={cube.id}
-            deck={cube}
-            onCombos={() => undefined}
-            onEdit={() => onEdit(cube)}
-            onShare={() => onShare(cube)}
-            onDelete={() => onDelete(cube)}
-          />
-        ))}
-      </div>
-    </section>
   )
 }
 
@@ -431,15 +375,7 @@ export function DecksPage() {
   }, [decksPageInfo?.hasNextPage, decksPageInfo?.endCursor, fetchMoreDecks])
 
   const decks = useMemo(() => flattenDecks(data?.decks), [data?.decks])
-  const { normalDecks, cubes } = useMemo(() => partitionDecksByKind(decks), [decks])
-  const { activeDecks, archivedDecks } = useMemo(
-    () => partitionDecksByArchive(normalDecks),
-    [normalDecks],
-  )
-  const { activeDecks: activeCubes, archivedDecks: archivedCubes } = useMemo(
-    () => partitionDecksByArchive(cubes),
-    [cubes],
-  )
+  const { activeDecks, archivedDecks } = useMemo(() => partitionDecksByArchive(decks), [decks])
   const deckGroups = useMemo(() => groupDecksByFormat(activeDecks), [activeDecks])
   const archivedDeckGroups = useMemo(() => groupDecksByFormat(archivedDecks), [archivedDecks])
   const isInitialLoading = isLoading && !data
@@ -449,8 +385,8 @@ export function DecksPage() {
     const deckName = deletingDeck.name
     void deleteDeck({
       variables: { id: deletingDeck.id },
-      onCompleted: () => showToast(`Deleted ${deletingDeck.kind === "cube" ? "cube" : "deck"} ${deckName}`),
-      onError: () => showToast(`Could not delete ${deletingDeck.kind === "cube" ? "cube" : "deck"} ${deckName}`, { tone: "error" }),
+      onCompleted: () => showToast(`Deleted deck ${deckName}`),
+      onError: () => showToast(`Could not delete deck ${deckName}`, { tone: "error" }),
     }).catch(() => undefined)
     if (editingDeck?.id === deletingDeck.id) setEditingDeck(null)
     if (sharingDeck?.id === deletingDeck.id) setSharingDeck(null)
@@ -479,27 +415,13 @@ export function DecksPage() {
               onShare={setSharingDeck}
               onDelete={setDeletingDeck}
             />
-          ) : null}
-          <CubeSection
-            cubes={activeCubes}
-            onDelete={setDeletingDeck}
-            onEdit={setEditingDeck}
-            onShare={setSharingDeck}
-          />
-          {!deckGroups.length && !activeCubes.length ? (
+          ) : (
             <DeckGalleryEmptyState
-              hasArchivedDecks={archivedDecks.length + archivedCubes.length > 0}
+              hasArchivedDecks={archivedDecks.length > 0}
               onNewDeck={() => setIsNewDeckOpen(true)}
             />
-          ) : null}
+          )}
           <DeckPlayHistory decks={activeDecks} />
-          <CubeSection
-            cubes={archivedCubes}
-            title="Archived cubes"
-            onDelete={setDeletingDeck}
-            onEdit={setEditingDeck}
-            onShare={setSharingDeck}
-          />
           <ArchivedDecksAccordion
             deckCount={archivedDecks.length}
             deckGroups={archivedDeckGroups}
@@ -526,9 +448,9 @@ export function DecksPage() {
       <ShareDeckDialog deck={sharingDeck} onOpenChange={(open) => !open && setSharingDeck(null)} />
       <ConfirmDialog
         destructive
-        confirmLabel={deletingDeck?.kind === "cube" ? "Delete cube" : "Delete deck"}
+        confirmLabel="Delete deck"
         open={Boolean(deletingDeck)}
-        title={deletingDeck ? `Delete ${deletingDeck.name}?` : "Delete deck or cube?"}
+        title={deletingDeck ? `Delete ${deletingDeck.name}?` : "Delete deck?"}
         onConfirm={deleteSelectedDeck}
         onOpenChange={(open) => !open && setDeletingDeck(null)}
       >
