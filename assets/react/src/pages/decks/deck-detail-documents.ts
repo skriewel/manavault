@@ -67,8 +67,14 @@ export const DeckDocument = graphql(`
     deck(id: $id) {
       id
       name
+      kind
       format
       status
+      location {
+        id
+        name
+        kind
+      }
       primer
       aiAnalysis
       aiAnalysisModel
