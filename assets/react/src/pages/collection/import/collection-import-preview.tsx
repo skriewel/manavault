@@ -143,5 +143,5 @@ function ImportSpendSummary({
 
 function importPurchasePriceText(cents?: number | null) {
   if (typeof cents !== "number" || !Number.isFinite(cents)) return "-"
-  return `$${centsToCurrencyInput(cents)}`
+  return `€${centsToCurrencyInput(cents)}`
 }
