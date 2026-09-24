@@ -125,7 +125,7 @@ export function PricingSection() {
             <div className="mt-1 text-base-content/60">
               {settings?.usdPerEur
                 ? `ECB: 1 EUR = ${settings.usdPerEur.toFixed(4)} USD${settings.fxRateDate ? ` · ${settings.fxRateDate}` : ""}`
-                : "ECB USD/EUR rate will be fetched when vendor prices are synced."}
+                : "USD vendor prices are unavailable until an ECB USD/EUR rate can be fetched."}
             </div>
           </div>
 
