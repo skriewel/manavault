@@ -23,9 +23,10 @@ import { Switch } from "../../components/ui/switch"
 import { Textarea } from "../../components/ui/textarea"
 import { useToast } from "../../components/ui/toast"
 import { refetchActiveQueries } from "../../lib/apollo"
-import { titleize } from "../../lib/utils"
-import type { DeckDetail, DeckSummary } from "./deck-types"
-import { DECK_FORMATS, DECK_STATUSES } from "./deck-types"
+import { present, titleize } from "../../lib/utils"
+import { CollectionItemFormOptionsDocument } from "../collection/items/documents"
+import type { DeckDetail, DeckKind, DeckSummary } from "./deck-types"
+import { DECK_FORMATS, DECK_KINDS, DECK_STATUSES } from "./deck-types"
 import { DeckPlayHistoryDocument } from "./deck-detail-documents"
 import { CreateDeckDocument, UpdateDeckDocument } from "./deck-list-documents"
 
@@ -42,8 +43,10 @@ export function EditDeckDialog({
   const { showToast } = useToast()
   const isOpen = open ?? Boolean(deck)
   const [name, setName] = useState("")
+  const [kind, setKind] = useState<DeckKind>("deck")
   const [format, setFormat] = useState<(typeof DECK_FORMATS)[number]>("commander")
   const [status, setStatus] = useState<(typeof DECK_STATUSES)[number]>("brewing")
+  const [locationId, setLocationId] = useState("")
   const [includedForPlay, setIncludedForPlay] = useState(true)
   const [playCount, setPlayCount] = useState("0")
   const [skipCount, setSkipCount] = useState("0")
@@ -57,14 +60,25 @@ export function EditDeckDialog({
     variables: { id: deck?.id || "" },
     skip: !deck || !isOpen || Boolean(inlineHistory),
   })
+  const locationOptionsQuery = useQuery(CollectionItemFormOptionsDocument, {
+    skip: !isOpen,
+    fetchPolicy: "cache-and-network",
+  })
+  const locationOptions =
+    locationOptionsQuery.data?.locations?.edges
+      ?.map((edge) => edge?.node)
+      .filter(present)
+      .filter((location) => location.kind !== "list") || []
   const history = inlineHistory || historyQuery.data?.deck
   const isHistoryReady = Boolean(history)
 
   useEffect(() => {
     if (!deck || !isOpen) return
     setName(deck.name)
+    setKind(deckKindValue(deck.kind))
     setFormat(deckFormatValue(deck.format))
     setStatus(deckStatusValue(deck.status))
+    setLocationId(deck.location?.id || "")
     setCoverDeckCardId(deck.coverDeckCardId)
     setPrimer(deck.primer || "")
     setError(null)
@@ -97,9 +111,11 @@ export function EditDeckDialog({
           id: deck.id,
           input: {
             name: name.trim(),
-            format,
+            kind,
+            format: kind === "cube" ? "casual" : format,
             status,
-            includedForPlay,
+            locationId: locationId || null,
+            includedForPlay: kind === "deck" ? includedForPlay : false,
             ...history,
             primer: primer.trim() || null,
             ...(deckCards ? { coverDeckCardId } : {}),
@@ -155,9 +171,11 @@ export function EditDeckDialog({
       >
         <DialogHeader>
           <div>
-            <DialogTitle id="edit-deck-title">Edit deck</DialogTitle>
+            <DialogTitle id="edit-deck-title">{kind === "cube" ? "Edit cube" : "Edit deck"}</DialogTitle>
             <p className="mt-1 text-sm text-base-content/75">
-              Update deck details, historical play data, and its player guide.
+              {kind === "cube"
+                ? "Update cube details, cover art, and notes."
+                : "Update deck details, historical play data, and its player guide."}
             </p>
           </div>
           <DialogClose className="h-11 w-11" onClose={close} />
@@ -172,7 +190,7 @@ export function EditDeckDialog({
               className="min-h-11"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Deck name"
+              placeholder={kind === "cube" ? "Cube name" : "Deck name"}
               autoFocus
             />
           </label>
@@ -180,21 +198,45 @@ export function EditDeckDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-2">
               <span className="text-xs font-black uppercase tracking-[0.18em] text-base-content/80">
-                Format
+                Type
               </span>
-              <Select value={format} onValueChange={(value) => setFormat(deckFormatValue(value))}>
+              <Select value={kind} onValueChange={(value) => setKind(deckKindValue(value))}>
                 <SelectTrigger className="min-h-11 bg-base-100 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {DECK_FORMATS.map((format) => (
-                    <SelectItem key={format} value={format}>
-                      {titleize(format)}
+                  {DECK_KINDS.map((deckKind) => (
+                    <SelectItem key={deckKind} value={deckKind}>
+                      {deckKind === "cube" ? "Cube" : "Deck"}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </label>
+
+            {kind === "deck" ? (
+              <label className="block space-y-2">
+                <span className="text-xs font-black uppercase tracking-[0.18em] text-base-content/80">
+                  Format
+                </span>
+                <Select value={format} onValueChange={(value) => setFormat(deckFormatValue(value))}>
+                  <SelectTrigger className="min-h-11 bg-base-100 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DECK_FORMATS.map((deckFormat) => (
+                      <SelectItem key={deckFormat} value={deckFormat}>
+                        {titleize(deckFormat)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+            ) : (
+              <div className="rounded-box border border-base-300 bg-base-200/40 p-3 text-sm text-base-content/70">
+                Cube cards reserve their physical collection copies until they are deallocated or removed.
+              </div>
+            )}
 
             <label className="block space-y-2">
               <span className="text-xs font-black uppercase tracking-[0.18em] text-base-content/80">
@@ -213,8 +255,31 @@ export function EditDeckDialog({
                 </SelectContent>
               </Select>
             </label>
+
+            <label className="block space-y-2 sm:col-span-2">
+              <span className="text-xs font-black uppercase tracking-[0.18em] text-base-content/80">
+                Physical location
+              </span>
+              <Select
+                value={locationId || SELECT_NONE_VALUE}
+                onValueChange={(value) => setLocationId(value === SELECT_NONE_VALUE ? "" : value)}
+              >
+                <SelectTrigger className="min-h-11 bg-base-100 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <SelectValue placeholder="No deck box assigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SELECT_NONE_VALUE}>No physical location</SelectItem>
+                  {locationOptions.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name} ({titleize(location.kind)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
           </div>
 
+          {kind === "deck" ? (
           <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
             <span>
               <span className="block text-sm font-bold">Included for play</span>
@@ -231,7 +296,9 @@ export function EditDeckDialog({
               className="shrink-0"
             />
           </label>
+          ) : null}
 
+          {kind === "deck" ? (
           <fieldset
             aria-busy={!isHistoryReady}
             className="rounded-box border border-base-300 bg-base-200/40 p-4"
@@ -294,6 +361,7 @@ export function EditDeckDialog({
               </label>
             </div>
           </fieldset>
+          ) : null}
 
           {deckCards ? (
             <label className="block space-y-2">
@@ -313,7 +381,7 @@ export function EditDeckDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={SELECT_NONE_VALUE}>Automatic (commander first)</SelectItem>
+                  <SelectItem value={SELECT_NONE_VALUE}>{kind === "cube" ? "Automatic" : "Automatic (commander first)"}</SelectItem>
                   {deckCards.map((deckCard) => (
                     <SelectItem key={deckCard.id} value={deckCard.id}>
                       {deckCard.card?.name || "Unknown card"} ·{" "}
@@ -323,7 +391,9 @@ export function EditDeckDialog({
                 </SelectContent>
               </Select>
               <span className="block text-sm text-base-content/75">
-                Uses the commander by default. Choose any card in this deck to override it.
+                {kind === "cube"
+                  ? "Choose any card in this cube to use as its cover."
+                  : "Uses the commander by default. Choose any card in this deck to override it."}
               </span>
             </label>
           ) : null}
@@ -373,13 +443,17 @@ export function EditDeckDialog({
               disabled={!isHistoryReady || updateDeck.isPending}
             >
               <Edit3 className="h-4 w-4" />
-              {updateDeck.isPending ? "Saving..." : "Save deck"}
+              {updateDeck.isPending ? "Saving..." : kind === "cube" ? "Save cube" : "Save deck"}
             </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
   )
+}
+
+export function deckKindValue(value: string): DeckKind {
+  return value === "cube" ? "cube" : "deck"
 }
 
 export function deckFormatValue(value: string): (typeof DECK_FORMATS)[number] {
@@ -431,9 +505,21 @@ export function NewDeckDialog({
   const client = useApolloClient()
   const { showToast } = useToast()
   const [name, setName] = useState("")
+  const [kind, setKind] = useState<DeckKind>("deck")
   const [format, setFormat] = useState<(typeof DECK_FORMATS)[number]>("commander")
   const [status, setStatus] = useState<(typeof DECK_STATUSES)[number]>("brewing")
+  const [locationId, setLocationId] = useState("")
   const [error, setError] = useState<string | null>(null)
+
+  const locationOptionsQuery = useQuery(CollectionItemFormOptionsDocument, {
+    skip: !open,
+    fetchPolicy: "cache-and-network",
+  })
+  const locationOptions =
+    locationOptionsQuery.data?.locations?.edges
+      ?.map((edge) => edge?.node)
+      .filter(present)
+      .filter((location) => location.kind !== "list") || []
 
   const [createDeckMutation, createDeckResult] = useMutation(CreateDeckDocument)
   const createDeck = {
@@ -441,13 +527,24 @@ export function NewDeckDialog({
     isPending: createDeckResult.loading,
     mutate: () =>
       void createDeckMutation({
-        variables: { input: { name: name.trim(), format, status } },
+        variables: {
+          input: {
+            name: name.trim(),
+            kind,
+            format: kind === "cube" ? "casual" : format,
+            status,
+            locationId: locationId || null,
+            includedForPlay: kind === "deck",
+          },
+        },
         onCompleted: (data) => {
           void refetchActiveQueries(client)
-          showToast(`Created deck ${name.trim()}`)
+          showToast(`Created ${kind === "cube" ? "cube" : "deck"} ${name.trim()}`)
           setName("")
+          setKind("deck")
           setFormat("commander")
           setStatus("brewing")
+          setLocationId("")
           setError(null)
           onOpenChange(false)
 
@@ -483,9 +580,9 @@ export function NewDeckDialog({
       <DialogContent className="max-w-xl" labelledBy="new-deck-title">
         <DialogHeader>
           <div>
-            <DialogTitle id="new-deck-title">New deck</DialogTitle>
+            <DialogTitle id="new-deck-title">New deck or cube</DialogTitle>
             <p className="mt-1 text-sm text-base-content/60">
-              Start with a shell, then import or add cards from the catalog.
+              Create a decklist or a cube, then import or add cards from the catalog.
             </p>
           </div>
           <DialogClose onClose={close} />
@@ -497,7 +594,7 @@ export function NewDeckDialog({
             <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Deck name"
+              placeholder={kind === "cube" ? "Cube name" : "Deck name"}
               autoFocus
             />
           </label>
@@ -505,24 +602,55 @@ export function NewDeckDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-2">
               <span className="text-xs font-black uppercase tracking-[0.18em] text-accent">
-                Format
+                Type
               </span>
               <Select
-                value={format}
-                onValueChange={(value) => setFormat(value as (typeof DECK_FORMATS)[number])}
+                value={kind}
+                onValueChange={(value) => {
+                  const nextKind = deckKindValue(value)
+                  setKind(nextKind)
+                  if (nextKind === "cube" && status === "brewing") setStatus("active")
+                }}
               >
                 <SelectTrigger className="bg-base-100 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {DECK_FORMATS.map((format) => (
-                    <SelectItem key={format} value={format}>
-                      {titleize(format)}
+                  {DECK_KINDS.map((deckKind) => (
+                    <SelectItem key={deckKind} value={deckKind}>
+                      {deckKind === "cube" ? "Cube" : "Deck"}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </label>
+
+            {kind === "deck" ? (
+              <label className="block space-y-2">
+                <span className="text-xs font-black uppercase tracking-[0.18em] text-accent">
+                  Format
+                </span>
+                <Select
+                  value={format}
+                  onValueChange={(value) => setFormat(value as (typeof DECK_FORMATS)[number])}
+                >
+                  <SelectTrigger className="bg-base-100 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DECK_FORMATS.map((deckFormat) => (
+                      <SelectItem key={deckFormat} value={deckFormat}>
+                        {titleize(deckFormat)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+            ) : (
+              <div className="rounded-box border border-base-300 bg-base-200/40 p-3 text-sm text-base-content/70">
+                A cube uses deck allocations so assigned cards are unavailable for normal pulls.
+              </div>
+            )}
 
             <label className="block space-y-2">
               <span className="text-xs font-black uppercase tracking-[0.18em] text-accent">
@@ -544,6 +672,28 @@ export function NewDeckDialog({
                 </SelectContent>
               </Select>
             </label>
+
+            <label className="block space-y-2 sm:col-span-2">
+              <span className="text-xs font-black uppercase tracking-[0.18em] text-accent">
+                Physical location
+              </span>
+              <Select
+                value={locationId || SELECT_NONE_VALUE}
+                onValueChange={(value) => setLocationId(value === SELECT_NONE_VALUE ? "" : value)}
+              >
+                <SelectTrigger className="bg-base-100 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <SelectValue placeholder="No deck box assigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SELECT_NONE_VALUE}>No physical location</SelectItem>
+                  {locationOptions.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name} ({titleize(location.kind)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
           </div>
 
           {error ? (
@@ -558,7 +708,7 @@ export function NewDeckDialog({
             </Button>
             <Button type="submit" disabled={createDeck.isPending}>
               <Plus className="h-4 w-4" />
-              {createDeck.isPending ? "Creating..." : "Create deck"}
+              {createDeck.isPending ? "Creating..." : kind === "cube" ? "Create cube" : "Create deck"}
             </Button>
           </div>
         </form>
