@@ -99,9 +99,9 @@ defmodule ManavaultWeb.Schema.Catalog.DeckTypes do
 
   node object(:deck) do
     field :name, non_null(:string)
-    field :kind, non_null(:string)
     field :format, non_null(:string)
     field :status, non_null(:string)
+    field :included_for_play, non_null(:boolean)
     field :play_count, non_null(:integer)
     field :skip_count, non_null(:integer)
     field :primer, :string
@@ -110,8 +110,6 @@ defmodule ManavaultWeb.Schema.Catalog.DeckTypes do
     field :commander_bracket, :integer
     field :commander_bracket_estimate, :integer
     field :share_token, :string
-
-    field :location, :location, resolve: dataloader(Catalog)
 
     field :ai_analyzed_at, :string do
       resolve(&DeckFields.deck_ai_analyzed_at/3)
@@ -412,23 +410,21 @@ defmodule ManavaultWeb.Schema.Catalog.DeckTypes do
 
   input_object :deck_input do
     field :name, non_null(:string)
-    field :kind, :string
     field :format, :string
     field :status, :string
-    field :location_id, :id
+    field :included_for_play, :boolean
   end
 
   input_object :deck_update_input do
     field :name, :string
-    field :kind, :string
     field :format, :string
     field :status, :string
+    field :included_for_play, :boolean
     field :play_count, :integer
     field :skip_count, :integer
     field :last_played_at, :string
     field :primer, :string
     field :cover_deck_card_id, :id
-    field :location_id, :id
   end
 
   input_object :deck_card_input do
