@@ -44,7 +44,7 @@ import type { AddCollectionItemInitialPrinting } from "./collection/types"
 import { selectedDeckCardNameForMutation } from "./decks/add-card-dialog-model"
 import type { DeckDetail, DeckZone } from "./decks/deck-types"
 import { ADD_CARD_ZONES, NON_COMMANDER_ADD_CARD_ZONES } from "./decks/deck-types"
-import { AddDeckCardDocument } from "./decks/queries"
+import { AddDeckCardDocument } from "./decks/deck-card-documents"
 import { ZoneToggle } from "./decks/zone-toggle"
 
 const ADD_CARD_SEARCH_DEBOUNCE_MS = 250
@@ -110,7 +110,6 @@ export function CardAddDialog(props: CardAddDialogProps) {
   const [locationId, setLocationId] = useState("")
   const [notes, setNotes] = useState("")
   const [purchasePrice, setPurchasePrice] = useState("")
-  const [isProxy, setIsProxy] = useState(false)
 
   const zoneOptions = deck?.format === "commander" ? ADD_CARD_ZONES : NON_COMMANDER_ADD_CARD_ZONES
 
@@ -200,7 +199,6 @@ export function CardAddDialog(props: CardAddDialogProps) {
     setLocationId("")
     setNotes("")
     setPurchasePrice("")
-    setIsProxy(false)
 
     if (mode === "collection" && initialPrinting) {
       setName(initialPrinting.cardName)
@@ -296,7 +294,7 @@ export function CardAddDialog(props: CardAddDialogProps) {
 
     const purchasePriceCents = parseCurrencyInputCents(purchasePrice)
     if (purchasePriceCents === undefined) {
-      return setError("Purchase price must be a euro amount")
+      return setError("Purchase price must be a dollar amount")
     }
 
     void createItemMutation({
@@ -310,7 +308,6 @@ export function CardAddDialog(props: CardAddDialogProps) {
           locationId: locationId || null,
           notes: notes.trim() || null,
           purchasePriceCents,
-          isProxy,
         },
       },
       onCompleted: () => onAdded(`${pluralize(quantity, "card")} added to collection`),
@@ -492,28 +489,12 @@ export function CardAddDialog(props: CardAddDialogProps) {
                   />
                 </label>
 
-                <label className="flex items-start gap-3 rounded-box border border-base-300 p-3 sm:col-span-2 lg:col-span-1">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary mt-0.5"
-                    checked={isProxy}
-                    disabled={isPending}
-                    onChange={(event) => setIsProxy(event.target.checked)}
-                  />
-                  <span>
-                    <span className="block text-sm font-semibold">Proxy</span>
-                    <span className="block text-xs leading-tight text-base-content/55">
-                      Track this copy, but give it no collection value.
-                    </span>
-                  </span>
-                </label>
-
                 <label className="form-control sm:col-span-2 lg:col-span-1">
                   <span className="label-text mb-1 text-sm font-semibold">Purchase price</span>
                   <Input
                     inputMode="decimal"
                     value={purchasePrice}
-                    disabled={isPending || isProxy}
+                    disabled={isPending}
                     onChange={(event) => setPurchasePrice(event.target.value)}
                     placeholder="Current market price"
                   />
