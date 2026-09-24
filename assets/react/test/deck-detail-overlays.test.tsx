@@ -120,7 +120,9 @@ test("deck editor chooses any deck card as the cover", async () => {
     id: "deck-1",
     input: {
       name: "Partner Deck",
+      kind: "deck",
       format: "commander",
+      locationId: null,
       status: "active",
       includedForPlay: true,
       playCount: 0,
@@ -164,7 +166,9 @@ test("deck editor saves and clears primer Markdown", async () => {
     id: "deck-1",
     input: {
       name: "Primer Deck",
+      kind: "deck",
       format: "commander",
+      locationId: null,
       status: "brewing",
       includedForPlay: true,
       playCount: 0,
@@ -218,7 +222,9 @@ test("deck editor imports historical play data", async () => {
     id: "deck-1",
     input: {
       name: "History Deck",
+      kind: "deck",
       format: "commander",
+      locationId: null,
       status: "active",
       includedForPlay: false,
       playCount: 14,
@@ -296,7 +302,9 @@ test("deck editor clears the last-played date", async () => {
     id: "deck-1",
     input: {
       name: "Clear History",
+      kind: "deck",
       format: "modern",
+      locationId: null,
       status: "archived",
       includedForPlay: true,
       playCount: 8,
