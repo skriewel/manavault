@@ -23,18 +23,15 @@ import { usePageTitle } from "../../lib/page-title"
 import { cn, compactNumber, pluralize, present, titleize } from "../../lib/utils"
 import { AutoSortSetupDialog, hasEnabledAutoSortRules } from "./auto-sort-setup-dialog"
 import { AutoSortSummaryDialog } from "./auto-sort-summary-dialog"
+import { AutoSortCollectionDocument } from "./auto-sort/documents"
 import { invalidateCollectionViews } from "./collection-navigation"
 import { COLLECTION_PAGE_SIZE, DEFAULT_COLLECTION_SORT } from "./constants"
+import { ExportCollectionDialog } from "./export/collection-export-dialog"
 import {
-  AutoSortCollectionDocument,
   CollectionItemFormOptionsDocument,
   CollectionItemGroupsPageDocument,
-  DeleteLocationDocument,
-  LocationCollectionCountDocument,
-  LocationDocument,
-} from "./documents"
+} from "./items/documents"
 import { CollectionFilterModal } from "./filter-modal"
-import { ExportCollectionDialog } from "./import-export-dialogs"
 import {
   AddCollectionItemToDeckDialog,
   BulkEditCollectionItemsDialog,
@@ -43,6 +40,11 @@ import {
 } from "./item-dialogs"
 import { collectionSelectionTarget, type CollectionSelectionTarget } from "./item-target"
 import { EditLocationDialog } from "./location-dialogs"
+import {
+  DeleteLocationDocument,
+  LocationCollectionCountDocument,
+  LocationDocument,
+} from "./locations/documents"
 import { SummaryActionMenu, UnfiledLocationCard, isUnfiledLocation } from "./location-summary"
 import {
   CollectionBulkActionBar,
@@ -61,7 +63,6 @@ import {
 } from "./storage"
 import type { AutoSortCollectionResult, CollectionExportFormat, CollectionSort } from "./types"
 import { collectionValueLine } from "./value-summary"
-import { DecksDocument } from "../decks/queries"
 
 const LOCATION_PAGE_SORT_STORAGE_KEY = collectionSortStorageKey("location")
 
@@ -119,10 +120,6 @@ export function LocationPage({ id }: { id: string }) {
   )
   const { data, loading: isLoading } = useQuery(LocationDocument, {
     variables: { id },
-    fetchPolicy: "cache-and-network",
-  })
-  const locationDecksQuery = useQuery(DecksDocument, {
-    skip: id === "unfiled",
     fetchPolicy: "cache-and-network",
   })
   const autoSortRuleOptionsQuery = useQuery(CollectionItemFormOptionsDocument, {
@@ -184,11 +181,6 @@ export function LocationPage({ id }: { id: string }) {
     itemsPageInfo?.endCursor,
   ])
   const location = data?.location
-  const storedDecks =
-    locationDecksQuery.data?.decks?.edges
-      ?.map((edge) => edge?.node)
-      .filter(present)
-      .filter((deck) => deck.location?.id === id) || []
   usePageTitle(location?.name ?? (isLoading ? "Collection Location" : "Location not found"))
   const activeStructuredFilterCount = countActiveCollectionFilters(structuredFilters)
   const hasLocationFilters = Boolean(combinedCollectionQuery)
@@ -323,23 +315,6 @@ export function LocationPage({ id }: { id: string }) {
           />
         )}
       </div>
-      {storedDecks.length ? (
-        <div className="mb-7 rounded-box border border-base-300 bg-base-100 p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="font-black tracking-normal">Stored decks & cubes</h2>
-            <Badge>{storedDecks.length}</Badge>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {storedDecks.map((deck) => (
-              <Button key={deck.id} asChild variant="outline" size="sm">
-                <Link to="/decks/$id" params={{ id: deck.id }}>
-                  {deck.name} · {deck.kind === "cube" ? "Cube" : "Deck"}
-                </Link>
-              </Button>
-            ))}
-          </div>
-        </div>
-      ) : null}
       <form
         onSubmit={submit}
         className={cn(
