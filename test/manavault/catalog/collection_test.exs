@@ -3,7 +3,7 @@ defmodule Manavault.Catalog.CollectionTest do
   use Manavault.CatalogTestFixtures, fixtures: [:black_lotus, :time_walk, :plains]
 
   alias Manavault.Catalog
-  alias Manavault.Catalog.{Card, CollectionItem}
+  alias Manavault.Catalog.{Card, CollectionItem, Printing}
   alias Manavault.Repo
 
   test "collection CSV import previews exact rows and applies one selected location" do
@@ -34,6 +34,50 @@ defmodule Manavault.Catalog.CollectionTest do
     assert Enum.map(items, & &1.purchase_price_cents) == [9_000_000, 500]
     assert Catalog.count_collection_items([]) == 3
     assert Catalog.count_collection_items(location_id: to_string(binder.id)) == 3
+  end
+
+  test "collection import commit rejects a location removed after preview" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} =
+             Catalog.import_cards([@black_lotus])
+
+    assert {:ok, location} =
+             Catalog.create_location(%{name: "Temporary Import Box", kind: "box"})
+
+    csv = """
+    Quantity,Card Name,Set Code,Collector Number,Finish
+    1,Black Lotus,lea,232,nonfoil
+    """
+
+    assert {:ok, preview} =
+             Catalog.preview_collection_import(csv, format: :csv, location_id: location.id)
+
+    assert {:ok, _location} = Catalog.delete_location(location)
+
+    assert {:error, :location_not_found} =
+             Catalog.import_collection_preview(preview)
+
+    assert [] = Catalog.list_collection_items([], limit: 10)
+  end
+
+  test "collection import commit rejects a printing removed after preview" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} =
+             Catalog.import_cards([@black_lotus])
+
+    csv = """
+    Quantity,Card Name,Set Code,Collector Number,Finish
+    1,Black Lotus,lea,232,nonfoil
+    """
+
+    assert {:ok, preview} = Catalog.preview_collection_import(csv, format: :csv)
+
+    "scryfall-printing-1"
+    |> then(&Repo.get!(Printing, &1))
+    |> Repo.delete!()
+
+    assert {:error, :printing_not_found} =
+             Catalog.import_collection_preview(preview)
+
+    assert [] = Catalog.list_collection_items([], limit: 10)
   end
 
   test "collection CSV import can target no location" do
@@ -144,6 +188,74 @@ defmodule Manavault.Catalog.CollectionTest do
 
     items = Catalog.list_collection_items([], limit: 10)
     assert Enum.map(items, & &1.purchase_price_cents) == [4_200, 100]
+  end
+
+  test "proxy collection items have zero value and do not affect value summaries" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+
+    assert {:ok, real_item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 1,
+               "purchase_price_cents" => 100
+             })
+
+    assert {:ok, proxy_item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 2,
+               "purchase_price_cents" => 50_000,
+               "is_proxy" => true
+             })
+
+    real_item = Catalog.get_collection_item!(real_item.id)
+    proxy_item = Catalog.get_collection_item!(proxy_item.id)
+
+    assert proxy_item.is_proxy
+    assert Manavault.Catalog.Price.collection_item_price_cents(proxy_item) == 0
+    assert Manavault.Catalog.Price.collection_item_purchase_price_cents(proxy_item) == 0
+    assert Manavault.Catalog.Price.collection_item_value_gain_cents(proxy_item) == 0
+
+    real_price = Manavault.Catalog.Price.collection_item_price_cents(real_item)
+    assert is_integer(real_price)
+
+    assert %{
+             item_count: 3,
+             total_price_cents: ^real_price,
+             purchase_price_cents: 100
+           } = Catalog.collection_value_summary()
+  end
+
+  test "collection search filters proxy and non-proxy items" do
+    assert {:ok, %{cards_count: 2, printings_count: 2}} =
+             Catalog.import_cards([@black_lotus, @time_walk])
+
+    proxy = create_collection_item!("scryfall-printing-1", is_proxy: true)
+    real = create_collection_item!("scryfall-printing-2", finish: "foil")
+
+    assert [proxy_result] = Catalog.list_collection_items(q: "is:proxy")
+    assert proxy_result.id == proxy.id
+
+    assert [real_result] = Catalog.list_collection_items(q: "is!=proxy")
+    assert real_result.id == real.id
+  end
+
+  test "collection CSV export and import preserve proxy status" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+
+    assert {:ok, _proxy_item} =
+             Catalog.create_collection_item(%{
+               "scryfall_id" => "scryfall-printing-1",
+               "quantity" => 1,
+               "is_proxy" => true
+             })
+
+    csv = Catalog.export_collection_csv()
+    assert csv =~ "Proxy"
+    assert csv =~ "Yes"
+
+    assert {:ok, preview} = Catalog.preview_collection_import(csv, format: :csv)
+    assert [%{attrs: %{"is_proxy" => true}}] = preview.rows
   end
 
   test "collection item groups combine rows by printing before pagination" do
