@@ -173,6 +173,18 @@ export function CollectionFilterModal({
               />
             </FilterSection>
 
+            <FilterSection label="Proxy" syntax="is:proxy / is!=proxy">
+              <SegmentedFilter
+                options={[
+                  { value: "any", label: "Any" },
+                  { value: "proxy", label: "Proxy" },
+                  { value: "nonproxy", label: "Non-proxy" },
+                ]}
+                value={draft.proxy}
+                onChange={(proxy) => update("proxy", proxy as ProxyFilter)}
+              />
+            </FilterSection>
+
             <FilterSection label="Quantity" syntax="qty>=2">
               <ComparisonFilterControl
                 inputMode="numeric"
