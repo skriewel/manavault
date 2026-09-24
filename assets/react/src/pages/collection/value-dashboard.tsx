@@ -155,13 +155,13 @@ function ValueComparison({ dashboard }: { dashboard: CollectionValueDashboardDat
       >
         <ComparisonBar
           label="Market"
-          value={summary.totalPriceText || "$0"}
+          value={summary.totalPriceText || "€0"}
           width={(summary.totalPriceCents / scale) * 100}
           className="bg-primary"
         />
         <ComparisonBar
           label="Basis"
-          value={summary.purchasePriceText || "$0"}
+          value={summary.purchasePriceText || "€0"}
           width={(summary.purchasePriceCents / scale) * 100}
           className="bg-accent"
         />
