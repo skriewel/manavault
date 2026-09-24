@@ -314,7 +314,9 @@ export function DeckDetailHeader({
                 onCombos={isCube ? undefined : onCombos}
                 onCompare={isCube ? undefined : onCompareDeck}
                 onDisassemble={canEdit ? onDisassemble : undefined}
-                onEdhrec={!isCube && canEdit && deck.format === "commander" ? onOpenEdhrec : undefined}
+                onEdhrec={
+                  !isCube && canEdit && deck.format === "commander" ? onOpenEdhrec : undefined
+                }
                 onRecommander={
                   !isCube && canEdit && deck.format === "commander" ? onOpenRecommander : undefined
                 }
