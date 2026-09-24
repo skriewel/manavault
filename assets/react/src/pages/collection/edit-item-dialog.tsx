@@ -259,7 +259,9 @@ export function EditCollectionItemDialog({
                 placeholder="Current market price"
               />
               <span className="block text-xs leading-tight text-base-content/55">
-                {isProxy ? "Proxy · excluded from collection value" : `Current ${item?.priceText || "unknown"}`}
+                {isProxy
+                  ? "Proxy · excluded from collection value"
+                  : `Current ${item?.priceText || "unknown"}`}
                 {!isProxy && item?.valueGainText ? (
                   <>
                     {" · Gain "}
