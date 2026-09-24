@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client/react"
 import { Link } from "@tanstack/react-router"
-import { CircleDollarSign, Pencil, TrendingDown, TrendingUp } from "lucide-react"
+import { Euro, Pencil, TrendingDown, TrendingUp } from "lucide-react"
 import type { FormEvent } from "react"
 import { useEffect, useState } from "react"
 import { EmptyState } from "../../components/card-image"
@@ -88,7 +88,7 @@ function ValueOverview({
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-4 py-4 sm:px-5">
         <div>
           <h2 id="collection-value-overview" className="flex items-center gap-2 text-lg font-black">
-            <CircleDollarSign className="h-5 w-5 text-primary" />
+            <Euro className="h-5 w-5 text-primary" />
             Collection value
           </h2>
           <p className="mt-1 text-sm text-base-content/65">
@@ -100,11 +100,11 @@ function ValueOverview({
       </header>
 
       <dl className="grid border-b border-base-300 sm:grid-cols-3 sm:divide-x sm:divide-base-300">
-        <ValueMetric label="Market value" value={summary.totalPriceText || "$0"} />
-        <ValueMetric label="Purchase basis" value={summary.purchasePriceText || "$0"} />
+        <ValueMetric label="Market value" value={summary.totalPriceText || "€0"} />
+        <ValueMetric label="Purchase basis" value={summary.purchasePriceText || "€0"} />
         <ValueMetric
           label={summary.valueGainCents < 0 ? "Value loss" : "Value gain"}
-          value={`${summary.valueGainText || "$0"}${summary.valueGainPercentText ? ` (${summary.valueGainPercentText})` : ""}`}
+          value={`${summary.valueGainText || "€0"}${summary.valueGainPercentText ? ` (${summary.valueGainPercentText})` : ""}`}
           valueClassName={collectionValueGainClass(summary.valueGainText)}
         />
       </dl>
@@ -424,7 +424,7 @@ function PurchaseBasisQuickEdit({
 
     const purchasePriceCents = parseCurrencyInputCents(purchasePrice)
     if (purchasePriceCents === undefined) {
-      setError("Enter a dollar amount, such as 12.34")
+      setError("Enter a euro amount, such as 12.34")
       return
     }
 
@@ -468,7 +468,7 @@ function PurchaseBasisQuickEdit({
             <p className="mt-0.5 truncate text-xs text-base-content/60">{cardName}</p>
           </div>
           <label className="block space-y-1.5">
-            <span className="text-xs font-bold text-base-content/70">Purchase price per card</span>
+            <span className="text-xs font-bold text-base-content/70">Purchase price per card (EUR)</span>
             <Input
               autoFocus
               className="h-9 min-h-9 font-mono"
@@ -517,6 +517,7 @@ function CollectionValueDashboardSkeleton() {
 }
 
 function priceSourceLabel(source: string | null | undefined) {
+  if (source === "cardmarket") return "Cardmarket"
   if (source === "tcgplayer") return "TCGplayer"
   if (source === "cardkingdom") return "Card Kingdom"
   if (source === "manapool") return "ManaPool"
