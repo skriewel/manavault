@@ -88,7 +88,7 @@ export type DeckGroupingDeckCard = {
   tag?: string | null
   tagIds?: string[] | null
   priceCents?: number | null
-  allocationStatus?: { state: string | null } | null
+  allocationStatus?: { proxyAllocated?: number | null; state: string | null } | null
   card: DeckGroupingCard | null
   preferredPrinting: DeckGroupingPrinting | null
   fallbackPrinting: DeckGroupingPrinting | null
@@ -151,13 +151,13 @@ type PriceBucket = {
 }
 
 const PRICE_BUCKETS: PriceBucket[] = [
-  { key: "under-1", label: "<€1", maxExclusiveCents: 100, order: 0 },
-  { key: "1-3", label: "€1–€3", minCents: 100, maxExclusiveCents: 300, order: 1 },
-  { key: "3-5", label: "€3–€5", minCents: 300, maxExclusiveCents: 500, order: 2 },
-  { key: "5-10", label: "€5–€10", minCents: 500, maxExclusiveCents: 1000, order: 3 },
-  { key: "10-25", label: "€10–€25", minCents: 1000, maxExclusiveCents: 2500, order: 4 },
-  { key: "25-50", label: "€25–€50", minCents: 2500, maxExclusiveCents: 5000, order: 5 },
-  { key: "50-plus", label: "€50+", minCents: 5000, order: 6 },
+  { key: "under-1", label: "<$1", maxExclusiveCents: 100, order: 0 },
+  { key: "1-3", label: "$1–$3", minCents: 100, maxExclusiveCents: 300, order: 1 },
+  { key: "3-5", label: "$3–$5", minCents: 300, maxExclusiveCents: 500, order: 2 },
+  { key: "5-10", label: "$5–$10", minCents: 500, maxExclusiveCents: 1000, order: 3 },
+  { key: "10-25", label: "$10–$25", minCents: 1000, maxExclusiveCents: 2500, order: 4 },
+  { key: "25-50", label: "$25–$50", minCents: 2500, maxExclusiveCents: 5000, order: 5 },
+  { key: "50-plus", label: "$50+", minCents: 5000, order: 6 },
 ]
 const SALT_BUCKETS = [
   { key: "under-1", label: "Salt <1", maxExclusive: 1, order: 0 },
@@ -393,6 +393,10 @@ function deckCardGroupDescriptor<T extends DeckGroupingDeckCard>(
   }
 
   if (groupBy === "price") {
+    if ((deckCard.allocationStatus?.proxyAllocated || 0) > 0) {
+      return { icon: "none", key: "proxies", label: "Proxies", order: 98 }
+    }
+
     return priceDescriptor(deckCard.priceCents)
   }
 
@@ -462,7 +466,12 @@ function allocationDescriptor(state: string | null | undefined) {
 function typeDescriptor<T extends DeckGroupingDeckCard>(
   deckCard: T,
 ): Omit<DeckGroup<T>, "cards" | "quantity"> {
-  const typeLine = deckCard.card?.typeLine || ""
+  let typeLine = deckCard.card?.typeLine || ""
+  const front = typeLine.split("//", 1)[0].trim()
+  // Match Card.sorting_type_line: permanents use the front; split spells keep both types.
+  if (/\b(?:Artifact|Battle|Creature|Enchantment|Land|Planeswalker)\b/i.test(front)) {
+    typeLine = front
+  }
 
   if (deckCard.zone === "commander") return typeGroup("commander", "Commander", "commander")
   if (/\bCreature\b/.test(typeLine)) return typeGroup("creature", "Creatures", "creature")
