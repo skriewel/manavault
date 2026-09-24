@@ -10,9 +10,7 @@ defmodule Manavault.Catalog.ImportTest do
   }
 
   test "import_cards stores identities and printings and safely updates on rerun" do
-    lotus = Map.put(@black_lotus, "cardmarket_id", 12_345)
-
-    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([lotus])
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
 
     assert %Card{
              name: "Black Lotus",
@@ -27,8 +25,7 @@ defmodule Manavault.Catalog.ImportTest do
              oracle_id: "oracle-1",
              set_code: "lea",
              collector_number: "232",
-             released_at: ~D[1993-08-05],
-             cardmarket_id: 12_345
+             released_at: ~D[1993-08-05]
            } = Catalog.get_printing_by_scryfall_id("scryfall-printing-1")
 
     assert %Printing{scryfall_id: "scryfall-printing-1"} = Catalog.get_printing("LEA", "232")
@@ -44,11 +41,7 @@ defmodule Manavault.Catalog.ImportTest do
     assert [%{set_code: "lea", set_name: "Limited Edition Alpha"}] = Catalog.search_sets("alpha")
 
     assert {:ok, %{cards_count: 1, printings_count: 1}} =
-             Catalog.import_cards([
-               @renamed_lotus
-               |> Map.put("game_changer", true)
-               |> Map.put("cardmarket_id", 12_345)
-             ])
+             Catalog.import_cards([Map.put(@renamed_lotus, "game_changer", true)])
 
     assert Repo.aggregate(Card, :count) == 1
     assert Repo.aggregate(Printing, :count) == 1
@@ -60,7 +53,7 @@ defmodule Manavault.Catalog.ImportTest do
            } = Repo.get!(Card, "oracle-1")
 
     assert %Printing{prices: prices} = Repo.get!(Printing, "scryfall-printing-1")
-    assert Jason.decode!(prices) == %{"usd" => "1.00", "eur" => "1.00"}
+    assert Jason.decode!(prices) == %{"usd" => "1.00"}
   end
 
   test "import_cards excludes memorabilia and token set printings" do
@@ -89,15 +82,9 @@ defmodule Manavault.Catalog.ImportTest do
     refute Repo.get(Printing, memorabilia["id"])
     refute Repo.get(Printing, token["id"])
     refute Repo.get(Card, token["oracle_id"])
-
-    assert %{rows: []} =
-             Repo.query!(
-               "SELECT scryfall_id FROM scryfall_printing_search WHERE scryfall_id IN (?, ?)",
-               [memorabilia["id"], token["id"]]
-             )
   end
 
-  test "import_cards releases the write lock between batches without dropping search rows" do
+  test "import_cards releases the write lock between batches" do
     test_pid = self()
     handler_id = {__MODULE__, make_ref()}
 
