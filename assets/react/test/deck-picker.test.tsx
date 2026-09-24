@@ -7,7 +7,7 @@ import { afterEach, expect, test, vi } from "vitest"
 import { ToastProvider } from "../src/components/ui/toast"
 import type { DeckSummary } from "../src/pages/decks/deck-types"
 import { DeckPlayHistory, RandomDeckDialog } from "../src/pages/decks/deck-picker"
-import { RandomDeckDocument, RecordDeckPlayDocument } from "../src/pages/decks/queries"
+import { RandomDeckDocument, RecordDeckPlayDocument } from "../src/pages/decks/deck-list-documents"
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, params }: { children: React.ReactNode; params: { id: string } }) => (
@@ -76,6 +76,9 @@ test("the picker explains when no active decks are available", async () => {
   renderDialog([randomDeckMock(null, null)])
 
   expect(await screen.findByText("No decks are ready to pick")).toBeTruthy()
+  expect(
+    screen.getByText("Edit a deck, set its status to Active, and turn on Included for play."),
+  ).toBeTruthy()
   expect((screen.getByRole("button", { name: "Skip" }) as HTMLButtonElement).disabled).toBe(true)
   expect(
     (screen.getByRole("button", { name: "Play this deck" }) as HTMLButtonElement).disabled,

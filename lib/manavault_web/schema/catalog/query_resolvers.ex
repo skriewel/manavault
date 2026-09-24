@@ -11,7 +11,7 @@ defmodule ManavaultWeb.Schema.Catalog.QueryResolvers do
      %{
        collection_count: Catalog.count_collection_items(),
        location_count: Catalog.count_locations(),
-       deck_count: Catalog.count_decks()
+       deck_count: Catalog.count_non_archived_decks()
      }}
   end
 
@@ -131,13 +131,13 @@ defmodule ManavaultWeb.Schema.Catalog.QueryResolvers do
 
   def collection_export_csv(_parent, args, resolution) do
     with {:ok, filters} <- collection_filters(args, resolution) do
-      {:ok, Catalog.export_collection_csv(filters)}
+      Catalog.export_collection_csv(filters)
     end
   end
 
   def collection_export_text(_parent, args, resolution) do
     with {:ok, filters} <- collection_filters(args, resolution) do
-      {:ok, Catalog.export_collection_text(filters)}
+      Catalog.export_collection_text(filters)
     end
   end
 
@@ -185,8 +185,8 @@ defmodule ManavaultWeb.Schema.Catalog.QueryResolvers do
     end
   end
 
-  def deck_analysis_requests(_parent, _args, _resolution) do
-    {:ok, AI.list_deck_analysis_requests()}
+  def deck_analysis_requests(_parent, %{limit: limit}, _resolution) do
+    {:ok, AI.list_deck_analysis_requests(limit: limit)}
   end
 
   def deck_question_answers(_parent, %{deck_id: deck_id}, resolution) do

@@ -53,6 +53,9 @@ defmodule Manavault.Catalog do
   defdelegate unfiled_location_summary(summaries \\ nil), to: Cached
   defdelegate list_location_options(), to: Cached
   defdelegate get_location!(id), to: Cached
+  defdelegate fetch_location(id), to: Collection
+  defdelegate preload_location(location), to: Collection
+  defdelegate validate_auto_sort_target(id), to: Collection
   defdelegate get_location_with_items!(id), to: Cached
 
   defdelegate list_collection_items_by_location(location_id, filters \\ [], opts \\ []),
@@ -77,8 +80,13 @@ defmodule Manavault.Catalog do
   defdelegate list_deck_summaries(), to: Decks
   defdelegate list_deck_summaries(opts), to: Decks
   defdelegate count_decks(), to: Decks
+  defdelegate count_non_archived_decks(), to: Decks
   defdelegate get_deck!(id, opts \\ []), to: Decks
   defdelegate get_deck_card!(id), to: Decks
+  defdelegate fetch_deck_card(id), to: Decks
+  defdelegate fetch_deck_tag(id), to: Decks
+  defdelegate preload_deck_card(deck_card), to: Decks
+  defdelegate preload_deck_cards(deck_cards), to: Decks
   defdelegate get_deck_by_share_token(token, opts \\ []), to: Decks
   defdelegate deck_cards(deck), to: Decks
   defdelegate fetch_cached_deck_cards(deck), to: Decks
@@ -143,6 +151,9 @@ defmodule Manavault.Catalog do
                 quantity \\ 1
               ),
               to: Decks
+
+  defdelegate add_collection_item_to_deck(deck, collection_item, zone \\ "mainboard"),
+    to: Decks
 
   defdelegate bulk_add_collection_items_to_deck(
                 deck_or_id,

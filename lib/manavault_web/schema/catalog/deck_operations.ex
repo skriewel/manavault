@@ -4,6 +4,8 @@ defmodule ManavaultWeb.Schema.Catalog.DeckOperations do
   use Absinthe.Schema.Notation
   use Absinthe.Relay.Schema.Notation, :modern
 
+  import ManavaultWeb.Schema.Catalog.Payload, only: [payload: 5]
+
   alias ManavaultWeb.Schema.Catalog.{
     AllocationResolvers,
     MutationResolvers,
@@ -30,6 +32,7 @@ defmodule ManavaultWeb.Schema.Catalog.DeckOperations do
     end
 
     field :deck_analysis_requests, non_null(list_of(non_null(:deck_analysis_request))) do
+      arg(:limit, :integer, default_value: 50)
       resolve(&QueryResolvers.deck_analysis_requests/3)
     end
 
@@ -665,19 +668,6 @@ defmodule ManavaultWeb.Schema.Catalog.DeckOperations do
           :allocation_result
         )
       end)
-    end
-  end
-
-  defp payload(parent, args, resolution, resolver, field) do
-    case resolver.(parent, args, resolution) do
-      {:ok, value} when is_map(value) ->
-        if Map.has_key?(value, field), do: {:ok, value}, else: {:ok, %{field => value}}
-
-      {:ok, value} ->
-        {:ok, %{field => value}}
-
-      other ->
-        other
     end
   end
 end
