@@ -457,7 +457,7 @@ function SellCardTile({
             x{availableQuantity} in this printing · x{item.totalOwnedCopies} total owned
           </p>
           <div className="flex items-center justify-between gap-2 pt-1">
-            <span className="font-mono text-sm font-black">{item.priceText || "$0"}</span>
+            <span className="font-mono text-sm font-black">{item.priceText || "€0"}</span>
             <span className="font-mono text-xs text-base-content/70">
               {formatCents(allCopiesTotal)} available
             </span>
