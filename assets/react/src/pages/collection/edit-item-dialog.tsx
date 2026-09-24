@@ -242,7 +242,8 @@ export function EditCollectionItemDialog({
                   Proxy
                 </span>
                 <span className="block text-xs leading-tight text-base-content/55">
-                  Keep this copy in inventory and deck allocation, but exclude it from collection value.
+                  Keep this copy in inventory and deck allocation, but exclude it from collection
+                  value.
                 </span>
               </span>
             </label>
