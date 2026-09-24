@@ -387,7 +387,9 @@ test.each([true, false])(
       id: "deck-1",
       input: {
         name: "Tonight",
+        kind: "deck",
         format: "commander",
+        locationId: null,
         status: "active",
         includedForPlay: !included,
         playCount: 4,
