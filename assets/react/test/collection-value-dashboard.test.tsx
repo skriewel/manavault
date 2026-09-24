@@ -12,11 +12,9 @@ import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, expect, test, vi } from "vitest"
 import { CollectionPageHeader } from "../src/pages/collection/collection-page-header"
-import {
-  BulkUpdateCollectionItemsDocument,
-  CollectionValueDashboardDocument,
-} from "../src/pages/collection/documents"
+import { BulkUpdateCollectionItemsDocument } from "../src/pages/collection/items/documents"
 import { deserializeCollectionTab } from "../src/pages/collection/storage"
+import { CollectionValueDashboardDocument } from "../src/pages/collection/value/documents"
 import { CollectionValueDashboard } from "../src/pages/collection/value-dashboard"
 
 afterEach(cleanup)
@@ -56,11 +54,11 @@ test("shows source-dependent totals, position charts, gains, and losses", async 
       unchangedPositionCount: 1,
       summary: {
         totalPriceCents: 12_500,
-        totalPriceText: "€125",
+        totalPriceText: "$125",
         purchasePriceCents: 10_000,
-        purchasePriceText: "€100",
+        purchasePriceText: "$100",
         valueGainCents: 2_500,
-        valueGainText: "+€25",
+        valueGainText: "+$25",
         valueGainPercent: 25,
         valueGainPercentText: "+25%",
       },
@@ -72,7 +70,7 @@ test("shows source-dependent totals, position charts, gains, and losses", async 
   expect(await screen.findByRole("heading", { name: "Collection value" })).toBeTruthy()
   expect(screen.getByText("ManaPool market")).toBeTruthy()
   expect(screen.getByText("7 owned cards across 3 printings")).toBeTruthy()
-  expect(screen.getByText("+€25 (+25%)")).toBeTruthy()
+  expect(screen.getByText("+$25 (+25%)")).toBeTruthy()
   expect(
     screen.getByRole("img", { name: "Market value compared with purchase basis" }),
   ).toBeTruthy()
@@ -113,7 +111,7 @@ test("quick edits the per-card purchase basis for every item in a printing posit
   await userEvent.click(
     await screen.findByRole("button", { name: "Edit purchase basis for Stronghold" }),
   )
-  const input = screen.getByRole("textbox", { name: "Purchase price per card (EUR)" })
+  const input = screen.getByRole("textbox", { name: "Purchase price per card" })
   expect(input.getAttribute("value")).toBe("10")
 
   await userEvent.clear(input)
@@ -134,11 +132,11 @@ test("teaches an empty collection how to start value tracking", async () => {
       unchangedPositionCount: 0,
       summary: {
         totalPriceCents: 0,
-        totalPriceText: "€0",
+        totalPriceText: "$0",
         purchasePriceCents: 0,
-        purchasePriceText: "€0",
+        purchasePriceText: "$0",
         valueGainCents: 0,
-        valueGainText: "€0",
+        valueGainText: "$0",
         valueGainPercent: null,
         valueGainPercentText: null,
       },
@@ -204,11 +202,11 @@ function dashboardData({ biggestGains = [] }: { biggestGains?: ReturnType<typeof
       unchangedPositionCount: 0,
       summary: {
         totalPriceCents: 6_000,
-        totalPriceText: "€60",
+        totalPriceText: "$60",
         purchasePriceCents: 2_000,
-        purchasePriceText: "€20",
+        purchasePriceText: "$20",
         valueGainCents: 4_000,
-        valueGainText: "+€40",
+        valueGainText: "+$40",
         valueGainPercent: 200,
         valueGainPercentText: "+200%",
       },
@@ -226,15 +224,15 @@ function position(
   valueGainCents: number,
 ) {
   const signedGain =
-    valueGainCents > 0 ? `+€${valueGainCents / 100}` : `-€${Math.abs(valueGainCents) / 100}`
+    valueGainCents > 0 ? `+$${valueGainCents / 100}` : `-$${Math.abs(valueGainCents) / 100}`
 
   return {
     items: [{ id: `item-${slug}-1` }, { id: `item-${slug}-2` }],
     quantity: 2,
     totalPriceCents,
-    totalPriceText: `€${totalPriceCents / 100}`,
+    totalPriceText: `$${totalPriceCents / 100}`,
     purchasePriceCents,
-    purchasePriceText: `€${purchasePriceCents / 100}`,
+    purchasePriceText: `$${purchasePriceCents / 100}`,
     valueGainCents,
     valueGainText: signedGain,
     valueGainPercent: null,
