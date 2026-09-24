@@ -459,7 +459,8 @@ const CollectionItemTile = memo(function CollectionItemTile({
   const proxyStatus = commonValue(group.items.map((member) => member.isProxy))
   const hasMixedFinishes = new Set(group.items.map((member) => member.finish)).size > 1
   const location = commonValue(group.items.map((member) => member.location?.name || "Unfiled"))
-  const price = finish && proxyStatus !== undefined ? (proxyStatus ? "Proxy" : item.priceText) : undefined
+  const price =
+    finish && proxyStatus !== undefined ? (proxyStatus ? "Proxy" : item.priceText) : undefined
   const allocatedLabel = allocatedQuantity
     ? freeQuantity > 0
       ? `Allocated x${allocatedQuantity} · Unallocated x${freeQuantity}`
