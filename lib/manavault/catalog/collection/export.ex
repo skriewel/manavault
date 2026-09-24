@@ -14,6 +14,7 @@ defmodule Manavault.Catalog.Collection.Export do
         "Condition",
         "Language",
         "Location",
+        "Proxy",
         "Purchase Price"
       ]
 
@@ -36,6 +37,7 @@ defmodule Manavault.Catalog.Collection.Export do
       item.condition,
       item.language,
       if(item.location_assoc, do: item.location_assoc.name, else: ""),
+      if(item.is_proxy, do: "Yes", else: "No"),
       item |> Price.collection_item_purchase_price_cents() |> Price.format_cents()
     ]
   end
