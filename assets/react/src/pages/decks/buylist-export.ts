@@ -32,10 +32,12 @@ export function deckCardsTotalPrice(deckCards: DeckCardEntry[]) {
       }
 
       const quantity = Math.max(deckCard.quantity || 0, 0)
+      const proxyQuantity = Math.max(deckCard.allocationStatus.proxyAllocated || 0, 0)
+      const pricedQuantity = Math.max(quantity - proxyQuantity, 0)
       if (typeof deckCard.priceCents === "number") {
-        summary.totalCents += deckCard.priceCents * quantity
+        summary.totalCents += deckCard.priceCents * pricedQuantity
       } else {
-        summary.unpricedQuantity += quantity
+        summary.unpricedQuantity += pricedQuantity
       }
 
       return summary
@@ -68,7 +70,7 @@ export function deckMissingCardsTotalPrice(deckCards: DeckCardEntry[]) {
 
 export function formatUsdCents(cents: number) {
   return new Intl.NumberFormat(undefined, {
-    currency: "EUR",
+    currency: "USD",
     maximumFractionDigits: cents % 100 === 0 ? 0 : 2,
     style: "currency",
   }).format(cents / 100)
