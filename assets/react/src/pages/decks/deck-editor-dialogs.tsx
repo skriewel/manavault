@@ -280,7 +280,7 @@ export function EditDeckDialog({
           </div>
 
           {kind === "deck" ? (
-          <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
+            <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
             <span>
               <span className="block text-sm font-bold">Included for play</span>
               <span id="deck-included-for-play-help" className="block text-sm text-base-content/75">
@@ -295,11 +295,11 @@ export function EditDeckDialog({
               disabled={!isHistoryReady || updateDeck.isPending}
               className="shrink-0"
             />
-          </label>
+            </label>
           ) : null}
 
           {kind === "deck" ? (
-          <fieldset
+            <fieldset
             aria-busy={!isHistoryReady}
             className="rounded-box border border-base-300 bg-base-200/40 p-4"
           >
@@ -360,7 +360,7 @@ export function EditDeckDialog({
                 />
               </label>
             </div>
-          </fieldset>
+            </fieldset>
           ) : null}
 
           {deckCards ? (
@@ -381,7 +381,9 @@ export function EditDeckDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={SELECT_NONE_VALUE}>{kind === "cube" ? "Automatic" : "Automatic (commander first)"}</SelectItem>
+                  <SelectItem value={SELECT_NONE_VALUE}>
+                    {kind === "cube" ? "Automatic" : "Automatic (commander first)"}
+                  </SelectItem>
                   {deckCards.map((deckCard) => (
                     <SelectItem key={deckCard.id} value={deckCard.id}>
                       {deckCard.card?.name || "Unknown card"} ·{" "}
