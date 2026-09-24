@@ -509,7 +509,9 @@ export function CardAddDialog(props: CardAddDialogProps) {
                 </label>
 
                 <label className="form-control sm:col-span-2 lg:col-span-1">
-                  <span className="label-text mb-1 text-sm font-semibold">Purchase price (EUR)</span>
+                  <span className="label-text mb-1 text-sm font-semibold">
+                    Purchase price (EUR)
+                  </span>
                   <Input
                     inputMode="decimal"
                     value={purchasePrice}
