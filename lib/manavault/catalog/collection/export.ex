@@ -3,24 +3,8 @@ defmodule Manavault.Catalog.Collection.Export do
 
   alias Manavault.Catalog.{CollectionItem, CSV, Price, Printing}
 
-  def csv(items) when is_list(items) do
-    rows =
-      Enum.map(items, fn item ->
-        [
-          item.quantity,
-          item.printing.card.name,
-          item.printing.set_code,
-          item.printing.collector_number,
-          item.finish,
-          item.condition,
-          item.language,
-          if(item.location_assoc, do: item.location_assoc.name, else: ""),
-          if(item.is_proxy, do: "Yes", else: "No"),
-          item |> Price.collection_item_purchase_price_cents() |> Price.format_cents()
-        ]
-      end)
-
-    [
+  def csv(items) do
+    header =
       [
         "Quantity",
         "Card Name",
@@ -30,16 +14,30 @@ defmodule Manavault.Catalog.Collection.Export do
         "Condition",
         "Language",
         "Location",
-        "Proxy",
         "Purchase Price"
       ]
-      | rows
-    ]
+
+    [header]
+    |> Stream.concat(Stream.map(items, &csv_row/1))
     |> Enum.map_join("\n", &CSV.row/1)
   end
 
-  def text(items) when is_list(items) do
+  def text(items) do
     Enum.map_join(items, "\n", &text_line/1)
+  end
+
+  defp csv_row(item) do
+    [
+      item.quantity,
+      item.printing.card.name,
+      item.printing.set_code,
+      item.printing.collector_number,
+      item.finish,
+      item.condition,
+      item.language,
+      if(item.location_assoc, do: item.location_assoc.name, else: ""),
+      item |> Price.collection_item_purchase_price_cents() |> Price.format_cents()
+    ]
   end
 
   defp text_line(%CollectionItem{} = item) do
