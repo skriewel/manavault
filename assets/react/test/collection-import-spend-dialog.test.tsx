@@ -36,7 +36,7 @@ vi.mock("@apollo/client/react", () => ({
 }))
 
 import { ToastProvider } from "../src/components/ui/toast"
-import { ImportCollectionDialog } from "../src/pages/collection/import-export-dialogs"
+import { ImportCollectionDialog } from "../src/pages/collection/import/collection-import-dialog"
 
 function importRow(rowNumber: number) {
   return {
@@ -64,12 +64,12 @@ test("total spend pricing previews the calculated per-card purchase price", asyn
   )
 
   await user.click(screen.getByRole("combobox", { name: "Purchase pricing" }))
-  await user.click(screen.getByRole("option", { name: "Total amount spent (EUR)" }))
+  await user.click(screen.getByRole("option", { name: "Total amount spent" }))
   await user.type(screen.getByRole("textbox", { name: /^Total amount spent/ }), "439")
   await user.type(screen.getByRole("textbox", { name: "Import text" }), "60 Card")
   await user.click(screen.getByRole("button", { name: "Preview import" }))
 
-  expect(screen.getByText("€439 ÷ 60 cards =")).not.toBeNull()
-  expect(screen.getByText("€7.32 per card")).not.toBeNull()
-  expect(screen.getAllByText("€7.32")).toHaveLength(2)
+  expect(screen.getByText("$439 ÷ 60 cards =")).not.toBeNull()
+  expect(screen.getByText("$7.32 per card")).not.toBeNull()
+  expect(screen.getAllByText("$7.32")).toHaveLength(2)
 })
