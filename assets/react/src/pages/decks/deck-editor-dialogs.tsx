@@ -171,7 +171,9 @@ export function EditDeckDialog({
       >
         <DialogHeader>
           <div>
-            <DialogTitle id="edit-deck-title">{kind === "cube" ? "Edit cube" : "Edit deck"}</DialogTitle>
+            <DialogTitle id="edit-deck-title">
+              {kind === "cube" ? "Edit cube" : "Edit deck"}
+            </DialogTitle>
             <p className="mt-1 text-sm text-base-content/75">
               {kind === "cube"
                 ? "Update cube details, cover art, and notes."
@@ -234,7 +236,8 @@ export function EditDeckDialog({
               </label>
             ) : (
               <div className="rounded-box border border-base-300 bg-base-200/40 p-3 text-sm text-base-content/70">
-                Cube cards reserve their physical collection copies until they are deallocated or removed.
+                Cube cards reserve their physical collection copies until they are deallocated or
+                removed.
               </div>
             )}
 
@@ -281,85 +284,88 @@ export function EditDeckDialog({
 
           {kind === "deck" ? (
             <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
-            <span>
-              <span className="block text-sm font-bold">Included for play</span>
-              <span id="deck-included-for-play-help" className="block text-sm text-base-content/75">
-                Include this deck in random picks. Archived decks are always excluded.
+              <span>
+                <span className="block text-sm font-bold">Included for play</span>
+                <span
+                  id="deck-included-for-play-help"
+                  className="block text-sm text-base-content/75"
+                >
+                  Include this deck in random picks. Archived decks are always excluded.
+                </span>
               </span>
-            </span>
-            <Switch
-              aria-label="Included for play"
-              aria-describedby="deck-included-for-play-help"
-              checked={includedForPlay}
-              onCheckedChange={setIncludedForPlay}
-              disabled={!isHistoryReady || updateDeck.isPending}
-              className="shrink-0"
-            />
+              <Switch
+                aria-label="Included for play"
+                aria-describedby="deck-included-for-play-help"
+                checked={includedForPlay}
+                onCheckedChange={setIncludedForPlay}
+                disabled={!isHistoryReady || updateDeck.isPending}
+                className="shrink-0"
+              />
             </label>
           ) : null}
 
           {kind === "deck" ? (
             <fieldset
-            aria-busy={!isHistoryReady}
-            className="rounded-box border border-base-300 bg-base-200/40 p-4"
-          >
-            <legend className="px-1 text-sm font-black tracking-normal">
-              Historical play data
-            </legend>
-            <p id="deck-play-history-help" className="mb-4 text-sm text-base-content/65">
-              {isHistoryReady
-                ? "Import existing totals. Plays lower future pick odds; skips raise them."
-                : "Loading existing totals..."}
-            </p>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <label className="block space-y-2">
-                <span className="text-xs font-black uppercase tracking-[0.18em] text-base-content/80">
-                  Plays
-                </span>
-                <Input
-                  aria-describedby="deck-play-history-help"
-                  className="min-h-11 font-mono font-bold tabular-nums"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  step={1}
-                  disabled={!isHistoryReady || updateDeck.isPending}
-                  value={playCount}
-                  onChange={(event) => setPlayCount(event.target.value)}
-                />
-              </label>
+              aria-busy={!isHistoryReady}
+              className="rounded-box border border-base-300 bg-base-200/40 p-4"
+            >
+              <legend className="px-1 text-sm font-black tracking-normal">
+                Historical play data
+              </legend>
+              <p id="deck-play-history-help" className="mb-4 text-sm text-base-content/65">
+                {isHistoryReady
+                  ? "Import existing totals. Plays lower future pick odds; skips raise them."
+                  : "Loading existing totals..."}
+              </p>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <label className="block space-y-2">
+                  <span className="text-xs font-black uppercase tracking-[0.18em] text-base-content/80">
+                    Plays
+                  </span>
+                  <Input
+                    aria-describedby="deck-play-history-help"
+                    className="min-h-11 font-mono font-bold tabular-nums"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    step={1}
+                    disabled={!isHistoryReady || updateDeck.isPending}
+                    value={playCount}
+                    onChange={(event) => setPlayCount(event.target.value)}
+                  />
+                </label>
 
-              <label className="block space-y-2">
-                <span className="text-xs font-black uppercase tracking-[0.18em] text-base-content/80">
-                  Skips
-                </span>
-                <Input
-                  aria-describedby="deck-play-history-help"
-                  className="min-h-11 font-mono font-bold tabular-nums"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  step={1}
-                  disabled={!isHistoryReady || updateDeck.isPending}
-                  value={skipCount}
-                  onChange={(event) => setSkipCount(event.target.value)}
-                />
-              </label>
+                <label className="block space-y-2">
+                  <span className="text-xs font-black uppercase tracking-[0.18em] text-base-content/80">
+                    Skips
+                  </span>
+                  <Input
+                    aria-describedby="deck-play-history-help"
+                    className="min-h-11 font-mono font-bold tabular-nums"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    step={1}
+                    disabled={!isHistoryReady || updateDeck.isPending}
+                    value={skipCount}
+                    onChange={(event) => setSkipCount(event.target.value)}
+                  />
+                </label>
 
-              <label className="block space-y-2">
-                <span className="text-xs font-black uppercase tracking-[0.18em] text-base-content/80">
-                  Last played
-                </span>
-                <Input
-                  aria-describedby="deck-play-history-help"
-                  className="min-h-11"
-                  type="date"
-                  disabled={!isHistoryReady || updateDeck.isPending}
-                  value={lastPlayedDate}
-                  onChange={(event) => setLastPlayedDate(event.target.value)}
-                />
-              </label>
-            </div>
+                <label className="block space-y-2">
+                  <span className="text-xs font-black uppercase tracking-[0.18em] text-base-content/80">
+                    Last played
+                  </span>
+                  <Input
+                    aria-describedby="deck-play-history-help"
+                    className="min-h-11"
+                    type="date"
+                    disabled={!isHistoryReady || updateDeck.isPending}
+                    value={lastPlayedDate}
+                    onChange={(event) => setLastPlayedDate(event.target.value)}
+                  />
+                </label>
+              </div>
             </fieldset>
           ) : null}
 
@@ -710,7 +716,11 @@ export function NewDeckDialog({
             </Button>
             <Button type="submit" disabled={createDeck.isPending}>
               <Plus className="h-4 w-4" />
-              {createDeck.isPending ? "Creating..." : kind === "cube" ? "Create cube" : "Create deck"}
+              {createDeck.isPending
+                ? "Creating..."
+                : kind === "cube"
+                  ? "Create cube"
+                  : "Create deck"}
             </Button>
           </div>
         </form>
