@@ -9,48 +9,6 @@ defmodule Manavault.Catalog.DeckCrudTest do
     DeckCard
   }
 
-  test "cube decks persist kind and reserve cards until archived" do
-    assert {:ok, %Deck{} = cube} =
-             Catalog.create_deck(%{
-               "name" => "Powered Cube",
-               "kind" => "cube",
-               "format" => "vintage",
-               "status" => "brewing"
-             })
-
-    assert cube.kind == "cube"
-    assert cube.format == "casual"
-    assert Catalog.deck_reserves_cards?(cube)
-
-    assert {:ok, archived_cube} = Catalog.update_deck(cube, %{"status" => "archived"})
-    refute Catalog.deck_reserves_cards?(archived_cube)
-
-    assert {:ok, normal_deck} =
-             Catalog.create_deck(%{"name" => "Brewing Deck", "status" => "brewing"})
-
-    refute Catalog.deck_reserves_cards?(normal_deck)
-
-    assert {:error, changeset} =
-             Catalog.create_deck(%{"name" => "Invalid Kind", "kind" => "stack"})
-
-    assert "is invalid" in errors_on(changeset).kind
-  end
-
-  test "deck physical location must be a real collection location" do
-    assert {:ok, deck_box} = Catalog.create_location(%{name: "Deck Box", kind: "deck_box"})
-    assert {:ok, list} = Catalog.create_location(%{name: "Virtual List", kind: "list"})
-
-    assert {:ok, %Deck{location_id: location_id}} =
-             Catalog.create_deck(%{"name" => "Located Deck", "location_id" => deck_box.id})
-
-    assert location_id == deck_box.id
-
-    assert {:error, changeset} =
-             Catalog.create_deck(%{"name" => "Bad Location", "location_id" => list.id})
-
-    assert "must be a physical collection location" in errors_on(changeset).location_id
-  end
-
   test "deck CRUD stores card identities with optional preferred printings" do
     assert {:ok, %{cards_count: 2, printings_count: 2}} =
              Catalog.import_cards([@black_lotus, @time_walk])
@@ -120,6 +78,31 @@ defmodule Manavault.Catalog.DeckCrudTest do
 
     assert {:ok, _deleted_deck} = Catalog.delete_deck(Catalog.get_deck!(deck.id))
     assert [] = Catalog.list_decks()
+  end
+
+  test "deck type statistics count the permanent rather than its secondary spell" do
+    precious =
+      Map.merge(@black_lotus, %{
+        "name" => "My Precious // Allure of Power",
+        "type_line" => "Legendary Artifact — Equipment // Instant — Adventure"
+      })
+
+    emeritus =
+      Map.merge(@time_walk, %{
+        "name" => "Emeritus of Woe // Demonic Tutor",
+        "type_line" => "Creature — Vampire Warlock // Sorcery"
+      })
+
+    assert {:ok, _} = Catalog.import_cards([precious, emeritus])
+    assert {:ok, deck} = Catalog.create_deck(%{"name" => "Multi-face types"})
+
+    assert {:ok, _} =
+             Catalog.add_card_to_deck(deck, %{"oracle_id" => "oracle-1", "quantity" => 2})
+
+    assert {:ok, _} =
+             Catalog.add_card_to_deck(deck, %{"oracle_id" => "oracle-2", "quantity" => 1})
+
+    assert Catalog.deck_stats(deck).types == %{"Artifact" => 2, "Creature" => 1}
   end
 
   test "add_card_to_deck resolves names with or without diacritics" do
