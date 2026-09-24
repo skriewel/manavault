@@ -63,6 +63,7 @@ import {
 } from "./storage"
 import type { AutoSortCollectionResult, CollectionExportFormat, CollectionSort } from "./types"
 import { collectionValueLine } from "./value-summary"
+import { DecksDocument } from "../decks/deck-list-documents"
 
 const LOCATION_PAGE_SORT_STORAGE_KEY = collectionSortStorageKey("location")
 
@@ -120,6 +121,10 @@ export function LocationPage({ id }: { id: string }) {
   )
   const { data, loading: isLoading } = useQuery(LocationDocument, {
     variables: { id },
+    fetchPolicy: "cache-and-network",
+  })
+  const locationDecksQuery = useQuery(DecksDocument, {
+    skip: id === "unfiled",
     fetchPolicy: "cache-and-network",
   })
   const autoSortRuleOptionsQuery = useQuery(CollectionItemFormOptionsDocument, {
@@ -181,6 +186,11 @@ export function LocationPage({ id }: { id: string }) {
     itemsPageInfo?.endCursor,
   ])
   const location = data?.location
+  const storedDecks =
+    locationDecksQuery.data?.decks?.edges
+      ?.map((edge) => edge?.node)
+      .filter(present)
+      .filter((deck) => deck.location?.id === id) || []
   usePageTitle(location?.name ?? (isLoading ? "Collection Location" : "Location not found"))
   const activeStructuredFilterCount = countActiveCollectionFilters(structuredFilters)
   const hasLocationFilters = Boolean(combinedCollectionQuery)
@@ -315,6 +325,23 @@ export function LocationPage({ id }: { id: string }) {
           />
         )}
       </div>
+      {storedDecks.length ? (
+        <div className="mb-7 rounded-box border border-base-300 bg-base-100 p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="font-black tracking-normal">Stored decks & cubes</h2>
+            <Badge>{storedDecks.length}</Badge>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {storedDecks.map((deck) => (
+              <Button key={deck.id} asChild variant="outline" size="sm">
+                <Link to="/decks/$id" params={{ id: deck.id }}>
+                  {deck.name} · {deck.kind === "cube" ? "Cube" : "Deck"}
+                </Link>
+              </Button>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <form
         onSubmit={submit}
         className={cn(
