@@ -4,7 +4,7 @@ defmodule Manavault.Pricing.VendorSyncWorker do
   use Oban.Worker,
     queue: :pricing,
     max_attempts: 3,
-    unique: [period: :infinity, fields: [:worker, :args], states: :incomplete]
+    unique: [period: :infinity, fields: [:worker], states: :incomplete]
 
   require Logger
 
