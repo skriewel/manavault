@@ -85,7 +85,9 @@ export function CollectionImportForm({
 
       <label className="block space-y-2">
         <FieldLabel>
-          {state.purchaseMode === "total_spend" ? "Total amount spent (EUR)" : "Purchase price per card (EUR)"}
+          {state.purchaseMode === "total_spend"
+            ? "Total amount spent (EUR)"
+            : "Purchase price per card (EUR)"}
         </FieldLabel>
         <input
           type="text"
