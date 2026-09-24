@@ -3,19 +3,10 @@ defmodule Manavault.Catalog.Scryfall.Import do
 
   import Ecto.Query
 
-  alias Manavault.Catalog.{
-    Card,
-    CollectionItem,
-    DeckCard,
-    Location,
-    Printing,
-    ScryfallOracleTags,
-    Search
-  }
+  alias Manavault.Catalog.{Card, Printing, ScryfallOracleTags, Search}
 
-  alias Manavault.Catalog.Scryfall.{BulkData, ImportRows}
+  alias Manavault.Catalog.Scryfall.{BulkData, ImportRows, ReconcilePrintings}
   alias Manavault.Repo
-  alias Manavault.Trade.Want
 
   require Logger
 
@@ -120,7 +111,6 @@ defmodule Manavault.Catalog.Scryfall.Import do
       fn ->
         insert_card_rows(rows.cards, replace_oracle_tag_fields?)
         insert_printing_rows(rows.printings)
-        refresh_printing_search_rows(rows.search_rows)
         {:ok, :imported}
       end,
       timeout: :infinity
@@ -132,7 +122,6 @@ defmodule Manavault.Catalog.Scryfall.Import do
       source_count: 0,
       cards_count: 0,
       printings_count: 0,
-      search_rows_count: 0,
       next_progress: @progress_source_card_interval
     }
   end
@@ -142,8 +131,7 @@ defmodule Manavault.Catalog.Scryfall.Import do
       counts
       | source_count: counts.source_count + source_count,
         cards_count: counts.cards_count + length(rows.cards),
-        printings_count: counts.printings_count + length(rows.printings),
-        search_rows_count: counts.search_rows_count + length(rows.search_rows)
+        printings_count: counts.printings_count + length(rows.printings)
     }
   end
 
@@ -197,7 +185,6 @@ defmodule Manavault.Catalog.Scryfall.Import do
            :image_uris,
            :prices,
            :released_at,
-           :cardmarket_id,
            :updated_at
          ]}
     )
@@ -213,8 +200,7 @@ defmodule Manavault.Catalog.Scryfall.Import do
        when processed >= next or processed == source_count do
     Logger.info(
       "Scryfall catalog import progress source_cards=#{processed}/#{source_count} " <>
-        "cards=#{counts.cards_count} printings=#{counts.printings_count} " <>
-        "search_rows=#{counts.search_rows_count}"
+        "cards=#{counts.cards_count} printings=#{counts.printings_count}"
     )
 
     %{counts | next_progress: next_progress_after(processed)}
@@ -255,304 +241,13 @@ defmodule Manavault.Catalog.Scryfall.Import do
     |> Enum.each(fn batch -> Repo.insert_all(schema, batch, opts) end)
   end
 
-  defp refresh_printing_search_rows([]), do: :ok
-
-  defp refresh_printing_search_rows(rows) do
-    rows
-    |> Enum.map(& &1.scryfall_id)
-    |> Enum.chunk_every(@batch_size)
-    |> Enum.each(fn ids ->
-      placeholders = Enum.map_join(ids, ",", fn _ -> "?" end)
-
-      Repo.query!(
-        "DELETE FROM scryfall_printing_search WHERE scryfall_id IN (#{placeholders})",
-        ids
-      )
-    end)
-
-    rows
-    |> Enum.chunk_every(@batch_size)
-    |> Enum.each(fn batch ->
-      values = Enum.map_join(batch, ",", fn _ -> "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" end)
-
-      params =
-        Enum.flat_map(batch, fn row ->
-          [
-            row.scryfall_id,
-            row.name,
-            row.compact_name,
-            row.flavor_name,
-            row.compact_flavor_name,
-            row.flavor_text,
-            row.compact_flavor_text,
-            row.type_line,
-            row.oracle_text,
-            row.compact_oracle_text,
-            row.set_code,
-            row.collector_number
-          ]
-        end)
-
-      Repo.query!(
-        """
-        INSERT INTO scryfall_printing_search (
-          scryfall_id,
-          name,
-          compact_name,
-          flavor_name,
-          compact_flavor_name,
-          flavor_text,
-          compact_flavor_text,
-          type_line,
-          oracle_text,
-          compact_oracle_text,
-          set_code,
-          collector_number
-        )
-        VALUES #{values}
-        """,
-        params
-      )
-    end)
-  end
-
   defp maybe_reconcile_printings(false, _imported_at), do: :ok
 
   defp maybe_reconcile_printings(true, imported_at) do
-    case reconcile_printings(imported_at) do
+    case ReconcilePrintings.run(imported_at) do
       {:ok, :reconciled} -> :ok
       {:error, reason} -> {:error, reason}
     end
-  end
-
-  defp reconcile_printings(imported_at) do
-    Repo.transact(
-      fn ->
-        current_printings =
-          Repo.all(
-            from printing in Printing,
-              where: printing.updated_at == ^imported_at,
-              order_by: [
-                desc: printing.released_at,
-                asc: printing.set_code,
-                asc: printing.collector_number
-              ],
-              select: %{
-                scryfall_id: printing.scryfall_id,
-                oracle_id: printing.oracle_id,
-                lang: printing.lang,
-                finishes: printing.finishes
-              }
-          )
-
-        stale_printings =
-          Repo.all(
-            from printing in Printing,
-              where: printing.updated_at != ^imported_at,
-              select: %{
-                scryfall_id: printing.scryfall_id,
-                oracle_id: printing.oracle_id,
-                lang: printing.lang,
-                finishes: printing.finishes
-              }
-          )
-
-        replacements_by_oracle = Enum.group_by(current_printings, & &1.oracle_id)
-        referenced_ids = referenced_printing_ids()
-
-        replacement_groups =
-          stale_printings
-          |> Enum.reduce(%{}, fn stale, groups ->
-            if MapSet.member?(referenced_ids, stale.scryfall_id) do
-              case replacement_for(stale, replacements_by_oracle[stale.oracle_id] || []) do
-                nil ->
-                  groups
-
-                replacement ->
-                  Map.update(
-                    groups,
-                    replacement.scryfall_id,
-                    [stale.scryfall_id],
-                    &[stale.scryfall_id | &1]
-                  )
-              end
-            else
-              groups
-            end
-          end)
-
-        Enum.each(replacement_groups, fn {replacement_id, stale_ids} ->
-          Enum.each(Enum.chunk_every(stale_ids, @batch_size), fn ids ->
-            Repo.update_all(
-              from(item in CollectionItem, where: item.scryfall_id in ^ids),
-              set: [scryfall_id: replacement_id]
-            )
-
-            Repo.update_all(
-              from(deck_card in DeckCard, where: deck_card.preferred_printing_id in ^ids),
-              set: [preferred_printing_id: replacement_id]
-            )
-
-            Repo.update_all(
-              from(location in Location, where: location.cover_scryfall_id in ^ids),
-              set: [cover_scryfall_id: replacement_id]
-            )
-
-            reassign_trade_wants(ids, replacement_id)
-          end)
-        end)
-
-        stale_ids = Enum.map(stale_printings, & &1.scryfall_id)
-        replaced_ids = replacement_groups |> Map.values() |> List.flatten() |> MapSet.new()
-
-        stale_ids
-        |> Enum.filter(&MapSet.member?(referenced_ids, &1))
-        |> Enum.reject(&MapSet.member?(replaced_ids, &1))
-        |> Enum.chunk_every(@batch_size)
-        |> Enum.each(&clear_trade_wants/1)
-
-        delete_printing_search_rows(stale_ids)
-
-        Enum.each(Enum.chunk_every(stale_ids, @batch_size), fn ids ->
-          Repo.delete_all(from printing in Printing, where: printing.scryfall_id in ^ids)
-        end)
-
-        delete_cards_without_printings()
-
-        {:ok, :reconciled}
-      end,
-      timeout: :infinity
-    )
-  end
-
-  defp delete_cards_without_printings do
-    orphaned_card_ids =
-      Repo.all(
-        from card in Card,
-          left_join: printing in Printing,
-          on: printing.oracle_id == card.oracle_id,
-          where: is_nil(printing.scryfall_id),
-          select: card.oracle_id
-      )
-
-    Enum.each(Enum.chunk_every(orphaned_card_ids, @batch_size), fn ids ->
-      Repo.delete_all(from deck_card in DeckCard, where: deck_card.oracle_id in ^ids)
-      Repo.delete_all(from card in Card, where: card.oracle_id in ^ids)
-    end)
-  end
-
-  defp replacement_for(_stale, []), do: nil
-
-  defp replacement_for(stale, replacements) do
-    stale_finishes = decode_finishes(stale.finishes)
-
-    Enum.find(replacements, fn replacement ->
-      replacement.lang == stale.lang and
-        not MapSet.disjoint?(stale_finishes, decode_finishes(replacement.finishes))
-    end) || Enum.find(replacements, &(&1.lang == stale.lang)) || List.first(replacements)
-  end
-
-  defp referenced_printing_ids do
-    collection_ids = Repo.all(from item in CollectionItem, select: item.scryfall_id)
-
-    deck_ids =
-      Repo.all(
-        from deck_card in DeckCard,
-          where: not is_nil(deck_card.preferred_printing_id),
-          select: deck_card.preferred_printing_id
-      )
-
-    location_ids =
-      Repo.all(
-        from location in Location,
-          where: not is_nil(location.cover_scryfall_id),
-          select: location.cover_scryfall_id
-      )
-
-    want_ids =
-      Repo.all(
-        from want in Want,
-          where: not is_nil(want.preferred_printing_id),
-          select: want.preferred_printing_id
-      )
-
-    MapSet.new(collection_ids ++ deck_ids ++ location_ids ++ want_ids)
-  end
-
-  defp decode_finishes(finishes) do
-    case Jason.decode(finishes) do
-      {:ok, values} when is_list(values) -> MapSet.new(values)
-      _other -> MapSet.new()
-    end
-  end
-
-  defp reassign_trade_wants(stale_ids, replacement_id) do
-    stale_wants = Repo.all(from want in Want, where: want.preferred_printing_id in ^stale_ids)
-
-    Enum.each(stale_wants, fn stale_want ->
-      case Repo.one(
-             from want in Want,
-               where:
-                 want.oracle_id == ^stale_want.oracle_id and
-                   want.preferred_printing_id == ^replacement_id
-           ) do
-        nil ->
-          Repo.update_all(
-            from(want in Want, where: want.id == ^stale_want.id),
-            set: [preferred_printing_id: replacement_id]
-          )
-
-        existing ->
-          Repo.update_all(
-            from(want in Want, where: want.id == ^existing.id),
-            inc: [quantity: stale_want.quantity]
-          )
-
-          Repo.delete!(stale_want)
-      end
-    end)
-  end
-
-  defp clear_trade_wants([]), do: :ok
-
-  defp clear_trade_wants(stale_ids) do
-    stale_wants = Repo.all(from want in Want, where: want.preferred_printing_id in ^stale_ids)
-
-    Enum.each(stale_wants, fn stale_want ->
-      case Repo.one(
-             from want in Want,
-               where:
-                 want.oracle_id == ^stale_want.oracle_id and
-                   is_nil(want.preferred_printing_id)
-           ) do
-        nil ->
-          Repo.update_all(
-            from(want in Want, where: want.id == ^stale_want.id),
-            set: [preferred_printing_id: nil]
-          )
-
-        existing ->
-          Repo.update_all(
-            from(want in Want, where: want.id == ^existing.id),
-            inc: [quantity: stale_want.quantity]
-          )
-
-          Repo.delete!(stale_want)
-      end
-    end)
-  end
-
-  defp delete_printing_search_rows([]), do: :ok
-
-  defp delete_printing_search_rows(ids) do
-    Enum.each(Enum.chunk_every(ids, @batch_size), fn batch ->
-      placeholders = Enum.map_join(batch, ",", fn _ -> "?" end)
-
-      Repo.query!(
-        "DELETE FROM scryfall_printing_search WHERE scryfall_id IN (#{placeholders})",
-        batch
-      )
-    end)
   end
 
   defp import_timestamp(false), do: utc_now()
