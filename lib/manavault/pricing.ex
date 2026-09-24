@@ -52,9 +52,15 @@ defmodule Manavault.Pricing do
   def refresh_exchange_rate(req_options \\ []) do
     case ExchangeRate.fetch(req_options) do
       {:ok, %{usd_per_eur: usd_per_eur, date: date}} ->
-        settings()
-        |> Settings.exchange_rate_changeset(%{usd_per_eur: usd_per_eur, fx_rate_date: date})
-        |> Repo.update()
+        result =
+          settings()
+          |> Settings.exchange_rate_changeset(%{usd_per_eur: usd_per_eur, fx_rate_date: date})
+          |> Repo.update()
+
+        with {:ok, _settings} <- result do
+          Store.set_usd_per_eur(usd_per_eur)
+          result
+        end
 
       {:error, reason} ->
         case settings() do
@@ -68,7 +74,9 @@ defmodule Manavault.Pricing do
   end
 
   def usd_cents_to_eur(cents) when is_integer(cents) do
-    case settings().usd_per_eur do
+    rate = Store.usd_per_eur() || settings().usd_per_eur
+
+    case rate do
       rate when is_number(rate) and rate > 0 -> Money.usd_cents_to_eur(cents, rate)
       _missing -> nil
     end
@@ -103,7 +111,9 @@ defmodule Manavault.Pricing do
   def sync_vendors_async do
     result =
       %{force: true}
-      |> VendorSyncWorker.new()
+      |> VendorSyncWorker.new(
+        replace: [available: [:args], scheduled: [:args], retryable: [:args]]
+      )
       |> Oban.insert()
 
     case result do
