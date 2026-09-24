@@ -296,7 +296,11 @@ export function AddCatalogCardToDeckDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isAddingToDeck || !deckId}>
-              {isAddingToDeck ? "Adding..." : selectedDeck?.kind === "cube" ? "Add to cube" : "Add to deck"}
+              {isAddingToDeck
+                ? "Adding..."
+                : selectedDeck?.kind === "cube"
+                  ? "Add to cube"
+                  : "Add to deck"}
             </Button>
           </div>
         </form>
