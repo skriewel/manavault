@@ -41,6 +41,7 @@ export const PreviewCollectionImportDocument = graphql(`
             scryfallId
             locationId
             purchasePriceCents
+            isProxy
           }
           printing {
             ...CollectionImportPrintingFields
