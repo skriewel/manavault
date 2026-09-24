@@ -3,15 +3,14 @@ defmodule Manavault.Catalog.Deck do
 
   import Ecto.Changeset
 
-  @kinds ~w(deck cube)
   @formats ~w(commander standard pioneer modern legacy vintage pauper limited casual)
   @statuses ~w(brewing active archived)
 
   schema "decks" do
     field :name, :string
-    field :kind, :string, default: "deck"
     field :format, :string, default: "commander"
     field :status, :string, default: "brewing"
+    field :included_for_play, :boolean, default: true
     field :play_count, :integer, default: 0
     field :skip_count, :integer, default: 0
     field :last_played_at, :utc_datetime
@@ -28,8 +27,6 @@ defmodule Manavault.Catalog.Deck do
     field :cover_image_url, :string, virtual: true
     field :commander_color_identity, {:array, :string}, virtual: true
 
-    belongs_to :location, Manavault.Catalog.Location
-
     has_many :deck_cards, Manavault.Catalog.DeckCard, on_replace: :delete
     has_many :deck_allocations, through: [:deck_cards, :deck_allocations]
     has_many :deck_tags, Manavault.Catalog.DeckTag, on_replace: :delete
@@ -38,7 +35,6 @@ defmodule Manavault.Catalog.Deck do
     timestamps(type: :utc_datetime)
   end
 
-  def kinds, do: @kinds
   def formats, do: @formats
   def statuses, do: @statuses
 
@@ -46,35 +42,23 @@ defmodule Manavault.Catalog.Deck do
     deck
     |> cast(attrs, [
       :name,
-      :kind,
       :format,
       :status,
+      :included_for_play,
       :play_count,
       :skip_count,
       :last_played_at,
       :primer,
-      :cover_deck_card_id,
-      :location_id
+      :cover_deck_card_id
     ])
-    |> normalize_cube_format()
-    |> validate_required([:name, :kind, :format, :status])
+    |> validate_required([:name, :format, :status, :included_for_play])
     |> validate_length(:name, min: 1, max: 120)
     |> validate_length(:primer, max: 50_000)
     |> validate_number(:play_count, greater_than_or_equal_to: 0)
     |> validate_number(:skip_count, greater_than_or_equal_to: 0)
-    |> validate_inclusion(:kind, @kinds)
     |> validate_inclusion(:format, @formats)
     |> validate_inclusion(:status, @statuses)
     |> foreign_key_constraint(:cover_deck_card_id)
-    |> foreign_key_constraint(:location_id)
-  end
-
-  defp normalize_cube_format(changeset) do
-    if get_field(changeset, :kind) == "cube" do
-      put_change(changeset, :format, "casual")
-    else
-      changeset
-    end
   end
 
   def share_changeset(deck, share_token) do
