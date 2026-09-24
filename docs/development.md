@@ -55,11 +55,35 @@ aube run test:react
 aube run build
 ```
 
+Audit dependencies for known advisories:
+
+```sh
+mix hex.audit
+aube audit
+```
+
+`mix hex.audit` also runs as part of `precommit`. Transitive JavaScript
+packages that upstream has not bumped yet are pinned through the `overrides`
+block in `package.json`; drop an override once `aube why <package>` shows every
+dependant already requires a fixed version. `aube audit` reports vite
+advisories against `vite@0.3.x`: that entry is `vite-plus` aliasing
+`@voidzero-dev/vite-plus-core` as `vite`, not the real Vite package, so those
+findings are false positives (the real `vite` stays on the version declared in
+`package.json`).
+
 GraphQL TypeScript artifacts are generated from `codegen.ts`:
 
 ```sh
 aube run codegen
 ```
+
+`aube run codegen` first dumps the Absinthe schema to
+`_build/graphql-schema.graphql` with `mix absinthe.schema.sdl`, then runs
+`graphql-codegen` against that file, so it does not need a running server.
+Introspecting a live server does not work: every `/api/graphql` POST requires a
+CSRF token, including in `MANAVAULT_AUTH_DISABLED=true` mode. Set
+`GRAPHQL_SCHEMA_URL` to another SDL or JSON schema file to override the source.
+Commit the regenerated files under `assets/react/src/gql/`.
 
 ## Native Shell Development
 
