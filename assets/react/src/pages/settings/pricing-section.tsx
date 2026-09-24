@@ -110,8 +110,8 @@ export function PricingSection() {
             <div>
               <h2 className="text-2xl font-black tracking-normal">Price source</h2>
               <p className="mt-1 text-sm text-base-content/60">
-                Choose where card prices come from. ManaVault values the collection in EUR.
-                USD-only vendor feeds are converted with the latest stored ECB reference rate.
+                Choose where card prices come from. ManaVault values the collection in EUR. USD-only
+                vendor feeds are converted with the latest stored ECB reference rate.
               </p>
             </div>
           </div>
