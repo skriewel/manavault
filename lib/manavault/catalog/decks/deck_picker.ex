@@ -18,13 +18,13 @@ defmodule Manavault.Catalog.Decks.DeckPicker do
     pick_weighted(candidates, now, random.())
   end
 
-  def record_outcome(%Deck{kind: "cube"}, _outcome), do: {:error, :cube_not_playable}
   def record_outcome(%Deck{status: "archived"}, _outcome), do: {:error, :archived_deck}
 
   def record_outcome(%Deck{} = deck, :played) do
     deck
     |> change(%{
       play_count: deck.play_count + 1,
+      skip_count: 0,
       last_played_at: DateTime.utc_now() |> DateTime.truncate(:second)
     })
     |> Repo.update()
@@ -65,7 +65,7 @@ defmodule Manavault.Catalog.Decks.DeckPicker do
 
   defp list_playable_decks do
     Deck
-    |> where([deck], deck.kind == "deck" and deck.status != "archived")
+    |> where([deck], deck.status == "active" and deck.included_for_play)
     |> order_by([deck], asc: deck.name, asc: deck.id)
     |> Repo.all()
   end
