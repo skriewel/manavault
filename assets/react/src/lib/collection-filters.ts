@@ -3,7 +3,6 @@ export type ColorOperator = ":" | ">=" | "<="
 export type FinishFilter = "any" | "foil" | "nonfoil" | "etched"
 export type AllocationFilter = "any" | "allocated" | "unallocated"
 export type ProxyFilter = "any" | "proxy" | "nonproxy"
-export type ProxyFilter = "any" | "proxy" | "nonproxy"
 export type RarityFilter = "common" | "uncommon" | "rare" | "mythic"
 export type ManaColor = "w" | "u" | "b" | "r" | "g" | "c"
 
@@ -25,7 +24,6 @@ export type CollectionFilterState = {
   finish: FinishFilter
   allocation: AllocationFilter
   proxy: ProxyFilter
-  proxy: ProxyFilter
   quantityOperator: ComparisonOperator
   quantity: string
   priceOperator: ComparisonOperator
@@ -40,7 +38,6 @@ const COMPARISON_OPERATORS: readonly ComparisonOperator[] = ["=", "!=", ">", ">=
 const COLOR_OPERATORS: readonly ColorOperator[] = [":", ">=", "<="]
 const FINISH_FILTERS: readonly FinishFilter[] = ["any", "foil", "nonfoil", "etched"]
 const ALLOCATION_FILTERS: readonly AllocationFilter[] = ["any", "allocated", "unallocated"]
-const PROXY_FILTERS: readonly ProxyFilter[] = ["any", "proxy", "nonproxy"]
 const PROXY_FILTERS: readonly ProxyFilter[] = ["any", "proxy", "nonproxy"]
 const RARITY_FILTERS: readonly RarityFilter[] = ["common", "uncommon", "rare", "mythic"]
 const MANA_COLORS: readonly ManaColor[] = ["w", "u", "b", "r", "g", "c"]
@@ -62,7 +59,6 @@ export const EMPTY_COLLECTION_FILTERS: CollectionFilterState = {
   language: "",
   finish: "any",
   allocation: "any",
-  proxy: "any",
   proxy: "any",
   quantityOperator: ">=",
   quantity: "",
