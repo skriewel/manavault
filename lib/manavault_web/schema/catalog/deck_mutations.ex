@@ -7,17 +7,21 @@ defmodule ManavaultWeb.Schema.Catalog.DeckMutations do
   alias ManavaultWeb.Schema.Catalog.Errors
   alias ManavaultWeb.Schema.RelayHelpers
 
-  def create_deck(_parent, %{input: input}, _resolution) do
-    case Catalog.create_deck(input) do
-      {:ok, deck} -> {:ok, deck}
-      {:error, changeset} -> {:error, Errors.changeset_error_message(changeset)}
+  def create_deck(_parent, %{input: input}, resolution) do
+    with {:ok, input} <- RelayHelpers.put_optional_node_id(input, :location_id, :location, resolution) do
+      case Catalog.create_deck(input) do
+        {:ok, deck} -> {:ok, deck}
+        {:error, changeset} -> {:error, Errors.changeset_error_message(changeset)}
+      end
     end
   end
 
   def update_deck(_parent, %{id: id, input: input}, resolution) do
     with {:ok, id} <- RelayHelpers.node_id(id, :deck, resolution),
          {:ok, input} <-
-           RelayHelpers.put_optional_node_id(input, :cover_deck_card_id, :deck_card, resolution) do
+           RelayHelpers.put_optional_node_id(input, :cover_deck_card_id, :deck_card, resolution),
+         {:ok, input} <-
+           RelayHelpers.put_optional_node_id(input, :location_id, :location, resolution) do
       deck = Catalog.get_deck!(id)
 
       case Catalog.update_deck(deck, input) do
@@ -35,6 +39,7 @@ defmodule ManavaultWeb.Schema.Catalog.DeckMutations do
       |> case do
         {:ok, deck} -> {:ok, deck}
         {:error, :archived_deck} -> {:error, "Archived decks cannot be recorded as played."}
+        {:error, :cube_not_playable} -> {:error, "Cubes cannot be recorded as played."}
         {:error, :invalid_outcome} -> {:error, "Choose played or skipped."}
         {:error, changeset} -> {:error, Errors.changeset_error_message(changeset)}
       end
