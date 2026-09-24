@@ -78,14 +78,14 @@ export function CollectionImportForm({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="per_card">Price per card</SelectItem>
-            <SelectItem value="total_spend">Total amount spent</SelectItem>
+            <SelectItem value="total_spend">Total amount spent (EUR)</SelectItem>
           </SelectContent>
         </Select>
       </label>
 
       <label className="block space-y-2">
         <FieldLabel>
-          {state.purchaseMode === "total_spend" ? "Total amount spent" : "Purchase price per card"}
+          {state.purchaseMode === "total_spend" ? "Total amount spent (EUR)" : "Purchase price per card (EUR)"}
         </FieldLabel>
         <input
           type="text"
@@ -93,7 +93,7 @@ export function CollectionImportForm({
           className="input input-bordered w-full bg-base-100"
           value={state.purchasePrice}
           onChange={(event) => update({ purchasePrice: event.target.value })}
-          placeholder={state.purchaseMode === "total_spend" ? "$439.00" : "$1.00"}
+          placeholder={state.purchaseMode === "total_spend" ? "€439.00" : "€1.00"}
         />
         <p className="text-sm text-base-content/55">
           {state.purchaseMode === "total_spend"
