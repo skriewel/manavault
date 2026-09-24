@@ -11,8 +11,14 @@ export const DecksDocument = graphql(`
         node {
           id
           name
+          kind
           format
           status
+          location {
+            id
+            name
+            kind
+          }
           includedForPlay
           playCount
           skipCount
@@ -48,6 +54,7 @@ export const RandomDeckDocument = graphql(`
     randomDeck(excludeId: $excludeId) {
       id
       name
+          kind
       format
       status
       coverImageUrl
@@ -79,6 +86,7 @@ export const CreateDeckDocument = graphql(`
       deck {
         id
         name
+          kind
         format
         status
         primer
@@ -112,8 +120,14 @@ export const UpdateDeckDocument = graphql(`
       deck {
         id
         name
+          kind
         format
         status
+          location {
+            id
+            name
+            kind
+          }
         includedForPlay
         playCount
         skipCount
