@@ -179,18 +179,18 @@ test("client validation blocks preview and save without discarding the staged ru
   )
 
   await user.click(screen.getByRole("button", { name: "Add rule" }))
-  await user.type(screen.getByRole("textbox", { name: /Minimum price \(EUR\)/ }), "not money")
+  await user.type(screen.getByRole("textbox", { name: /Minimum price/ }), "not money")
   await user.click(screen.getByRole("button", { name: "Done" }))
   await user.click(screen.getByRole("button", { name: "Preview auto-sort" }))
   await user.click(screen.getByRole("button", { name: "Save rules" }))
 
   expect(onValidationError).toHaveBeenNthCalledWith(
     1,
-    "New auto-sort rule: minimum price must be a euro amount.",
+    "New auto-sort rule: minimum price must be a dollar amount.",
   )
   expect(onValidationError).toHaveBeenNthCalledWith(
     2,
-    "New auto-sort rule: minimum price must be a euro amount.",
+    "New auto-sort rule: minimum price must be a dollar amount.",
   )
   expect(onPreview).not.toHaveBeenCalled()
   expect(onSave).not.toHaveBeenCalled()
@@ -265,4 +265,99 @@ test("auto-sort summary shows printing details and keeps the image preview in th
     12,
   )
   expect(previewImage?.parentElement?.style.left).toBe("72px")
+  const preview = previewImage!.parentElement!
+  expect(preview.parentElement).toBe(document.body)
+  expect(Number(getComputedStyle(preview).zIndex)).toBeGreaterThan(
+    Number(getComputedStyle(dialog.parentElement!).zIndex),
+  )
 })
+
+test.each([true, false])(
+  "auto-sort can group by source and destination (dryRun=%s)",
+  async (dryRun) => {
+    const user = userEvent.setup()
+    const onApply = vi.fn()
+    const baseMove = {
+      finish: "nonfoil",
+      quantity: 2,
+      fromLocationId: "box-1",
+      fromLocationName: "Red / Green / Multicolor",
+      toLocationId: "binder-1",
+      toLocationName: "Trade binder",
+    }
+    render(
+      <AutoSortSummaryDialog
+        open
+        onOpenChange={vi.fn()}
+        onApply={onApply}
+        result={{
+          dryRun,
+          checkedCount: 8,
+          movedCount: 8,
+          moves: [
+            { ...baseMove, collectionItemId: "1", cardName: "Lightning Bolt" },
+            {
+              ...baseMove,
+              collectionItemId: "2",
+              cardName: "Llanowar Elves",
+              toLocationId: "binder-2",
+              toLocationName: "Keep binder",
+            },
+            {
+              ...baseMove,
+              collectionItemId: "3",
+              cardName: "Sol Ring",
+              fromLocationId: null,
+              fromLocationName: null,
+            },
+            {
+              ...baseMove,
+              collectionItemId: "4",
+              cardName: "Birds of Paradise",
+              fromLocationId: "box-2",
+            },
+          ],
+        }}
+      />,
+    )
+
+    const to = screen.getByRole("radio", { name: "To" })
+    const from = screen.getByRole("radio", { name: "From" })
+    expect(to.getAttribute("aria-checked")).toBe("true")
+    expect(ruleNames()).toEqual(["Keep binder", "Trade binder"])
+    const tradeGroup = screen.getByRole("heading", { name: "Trade binder" }).closest("details")!
+    expect(within(tradeGroup).getAllByRole("listitem")).toHaveLength(3)
+
+    await user.click(from)
+    expect(from.getAttribute("aria-checked")).toBe("true")
+    expect(ruleNames()).toEqual(["Red / Green / Multicolor", "Red / Green / Multicolor", "Unfiled"])
+    const sourceGroups = screen.getAllByRole("heading", { name: "Red / Green / Multicolor" })
+    const firstSource = sourceGroups[0].closest("details")!
+    expect(within(firstSource).getByText("Location ID: box-1")).not.toBeNull()
+    expect(within(firstSource).getByText("Lightning Bolt")).not.toBeNull()
+    expect(within(firstSource).getByText("Llanowar Elves")).not.toBeNull()
+    expect(within(firstSource).queryByText("Birds of Paradise")).toBeNull()
+    const moveLabel = dryRun ? "Would move" : "Moved"
+    expect(
+      within(firstSource).getByText(`${moveLabel} from Red / Green / Multicolor to Keep binder`),
+    ).not.toBeNull()
+    expect(screen.getByText(`${moveLabel} from Unfiled to Trade binder`)).not.toBeNull()
+    expect(screen.getAllByText("Qty 2")).toHaveLength(4)
+    expect(onApply).not.toHaveBeenCalled()
+
+    // Clicking the active segment must not leave the view unselected.
+    await user.click(from)
+    expect(from.getAttribute("aria-checked")).toBe("true")
+    await user.keyboard("{ArrowLeft} ")
+    expect(to.getAttribute("aria-checked")).toBe("true")
+    expect(ruleNames()).toEqual(["Keep binder", "Trade binder"])
+
+    if (dryRun) {
+      await user.click(from)
+      await user.click(screen.getByRole("button", { name: "Apply auto-sort" }))
+      expect(onApply).toHaveBeenCalledOnce()
+    } else {
+      expect(screen.queryByRole("button", { name: "Apply auto-sort" })).toBeNull()
+    }
+  },
+)
