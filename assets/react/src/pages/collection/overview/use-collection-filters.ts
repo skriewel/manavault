@@ -182,6 +182,12 @@ function collectionFilterChips(
   if (filters.oracle.trim())
     chips.push({ key: "oracle", label: `Rules text: ${filters.oracle.trim()}` })
   if (filters.finish !== "any") chips.push({ key: "finish", label: `Finish: ${filters.finish}` })
+  if (filters.proxy !== "any") {
+    chips.push({
+      key: "proxy",
+      label: filters.proxy === "proxy" ? "Proxy: Yes" : "Proxy: No",
+    })
+  }
   if (filters.quantity.trim()) {
     chips.push({
       key: "quantity",
@@ -189,7 +195,7 @@ function collectionFilterChips(
     })
   }
   if (filters.priceUsd.trim())
-    chips.push({ key: "price", label: `USD ${filters.priceOperator} ${filters.priceUsd.trim()}` })
+    chips.push({ key: "price", label: `EUR ${filters.priceOperator} ${filters.priceUsd.trim()}` })
   if (filters.releasedDate.trim()) {
     chips.push({
       key: "date",
