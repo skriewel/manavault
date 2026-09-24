@@ -55,6 +55,12 @@ defmodule Manavault.Catalog.Decks.Queries do
     Repo.aggregate(Deck, :count)
   end
 
+  def count_non_archived_decks do
+    Deck
+    |> where([deck], deck.status != "archived")
+    |> Repo.aggregate(:count)
+  end
+
   def get_deck_by_share_token(token, opts \\ [])
 
   def get_deck_by_share_token(token, opts) when is_list(opts) do
@@ -90,24 +96,13 @@ defmodule Manavault.Catalog.Decks.Queries do
   end
 
   def deck_legality(%Deck{deck_cards: deck_cards} = deck) when is_list(deck_cards) do
-    if deck_cards_ready_for_legality?(deck, deck_cards) do
+    if Enum.all?(deck_cards, &match?(%DeckCard{card: %Card{}}, &1)) do
       DeckLegality.evaluate(deck)
     else
       deck
       |> Repo.preload(Preloads.deck_preloads(), force: true)
       |> DeckLegality.evaluate()
     end
-  end
-
-  defp deck_cards_ready_for_legality?(%Deck{format: "limited"}, deck_cards) do
-    Enum.all?(deck_cards, fn
-      %DeckCard{card: %Card{printings: printings}} when is_list(printings) -> true
-      _deck_card -> false
-    end)
-  end
-
-  defp deck_cards_ready_for_legality?(_deck, deck_cards) do
-    Enum.all?(deck_cards, &match?(%DeckCard{card: %Card{}}, &1))
   end
 
   def deck_legality(%Deck{} = deck) do
