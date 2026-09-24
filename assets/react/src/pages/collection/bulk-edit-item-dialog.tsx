@@ -176,7 +176,9 @@ export function BulkEditCollectionItemsDialog({
                 </span>
               </span>
             </label>
-            <label className={`flex items-center gap-2 text-sm ${!updateProxy ? "opacity-60" : ""}`}>
+            <label
+              className={`flex items-center gap-2 text-sm ${!updateProxy ? "opacity-60" : ""}`}
+            >
               <input
                 type="checkbox"
                 className="checkbox checkbox-primary"
