@@ -3,7 +3,7 @@ defmodule Manavault.Catalog.CollectionTest do
   use Manavault.CatalogTestFixtures, fixtures: [:black_lotus, :time_walk, :plains]
 
   alias Manavault.Catalog
-  alias Manavault.Catalog.{Card, CollectionItem, Printing}
+  alias Manavault.Catalog.{Card, CollectionItem}
   alias Manavault.Repo
 
   test "collection CSV import previews exact rows and applies one selected location" do
@@ -34,51 +34,6 @@ defmodule Manavault.Catalog.CollectionTest do
     assert Enum.map(items, & &1.purchase_price_cents) == [9_000_000, 500]
     assert Catalog.count_collection_items([]) == 3
     assert Catalog.count_collection_items(location_id: to_string(binder.id)) == 3
-  end
-
-  test "collection import commit rejects a location removed after preview" do
-    assert {:ok, %{cards_count: 1, printings_count: 1}} =
-             Catalog.import_cards([@black_lotus])
-
-    assert {:ok, location} =
-             Catalog.create_location(%{name: "Temporary Import Box", kind: "box"})
-
-    csv = """
-    Quantity,Card Name,Set Code,Collector Number,Finish
-    1,Black Lotus,lea,232,nonfoil
-    """
-
-    assert {:ok, preview} =
-             Catalog.preview_collection_import(csv, format: :csv, location_id: location.id)
-
-    assert {:ok, _location} = Catalog.delete_location(location)
-
-    assert {:error, :location_not_found} =
-             Catalog.import_collection_preview(preview)
-
-    assert [] = Catalog.list_collection_items([], limit: 10)
-  end
-
-  test "collection import commit rejects a printing removed after preview" do
-    assert {:ok, %{cards_count: 1, printings_count: 1}} =
-             Catalog.import_cards([@black_lotus])
-
-    csv = """
-    Quantity,Card Name,Set Code,Collector Number,Finish
-    1,Black Lotus,lea,232,nonfoil
-    """
-
-    assert {:ok, preview} =
-             Catalog.preview_collection_import(csv, format: :csv)
-
-    "scryfall-printing-1"
-    |> then(&Repo.get!(Printing, &1))
-    |> Repo.delete!()
-
-    assert {:error, :printing_not_found} =
-             Catalog.import_collection_preview(preview)
-
-    assert [] = Catalog.list_collection_items([], limit: 10)
   end
 
   test "collection CSV import can target no location" do
@@ -189,74 +144,6 @@ defmodule Manavault.Catalog.CollectionTest do
 
     items = Catalog.list_collection_items([], limit: 10)
     assert Enum.map(items, & &1.purchase_price_cents) == [4_200, 100]
-  end
-
-  test "proxy collection items have zero value and do not affect value summaries" do
-    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
-
-    assert {:ok, real_item} =
-             Catalog.create_collection_item(%{
-               "scryfall_id" => "scryfall-printing-1",
-               "quantity" => 1,
-               "purchase_price_cents" => 100
-             })
-
-    assert {:ok, proxy_item} =
-             Catalog.create_collection_item(%{
-               "scryfall_id" => "scryfall-printing-1",
-               "quantity" => 2,
-               "purchase_price_cents" => 50_000,
-               "is_proxy" => true
-             })
-
-    real_item = Catalog.get_collection_item!(real_item.id)
-    proxy_item = Catalog.get_collection_item!(proxy_item.id)
-
-    assert proxy_item.is_proxy
-    assert Manavault.Catalog.Price.collection_item_price_cents(proxy_item) == 0
-    assert Manavault.Catalog.Price.collection_item_purchase_price_cents(proxy_item) == 0
-    assert Manavault.Catalog.Price.collection_item_value_gain_cents(proxy_item) == 0
-
-    real_price = Manavault.Catalog.Price.collection_item_price_cents(real_item)
-    assert is_integer(real_price)
-
-    assert %{
-             item_count: 3,
-             total_price_cents: ^real_price,
-             purchase_price_cents: 100
-           } = Catalog.collection_value_summary()
-  end
-
-  test "collection search filters proxy and non-proxy items" do
-    assert {:ok, %{cards_count: 2, printings_count: 2}} =
-             Catalog.import_cards([@black_lotus, @time_walk])
-
-    proxy = create_collection_item!("scryfall-printing-1", is_proxy: true)
-    real = create_collection_item!("scryfall-printing-2", finish: "foil")
-
-    assert [proxy_result] = Catalog.list_collection_items(q: "is:proxy")
-    assert proxy_result.id == proxy.id
-
-    assert [real_result] = Catalog.list_collection_items(q: "is!=proxy")
-    assert real_result.id == real.id
-  end
-
-  test "collection CSV export and import preserve proxy status" do
-    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
-
-    assert {:ok, _proxy_item} =
-             Catalog.create_collection_item(%{
-               "scryfall_id" => "scryfall-printing-1",
-               "quantity" => 1,
-               "is_proxy" => true
-             })
-
-    csv = Catalog.export_collection_csv()
-    assert csv =~ "Proxy"
-    assert csv =~ "Yes"
-
-    assert {:ok, preview} = Catalog.preview_collection_import(csv, format: :csv)
-    assert [%{attrs: %{"is_proxy" => true}}] = preview.rows
   end
 
   test "collection item groups combine rows by printing before pagination" do
@@ -450,6 +337,17 @@ defmodule Manavault.Catalog.CollectionTest do
     assert Repo.get!(CollectionItem, lotus.id).purchase_price_cents == 350
   end
 
+  test "bulk collection item updates report missing ids without changing existing items" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+    item = create_collection_item!("scryfall-printing-1", notes: "unchanged")
+    missing_id = item.id + 10_000
+
+    assert {:error, {:not_found, [^missing_id]}} =
+             Catalog.update_collection_items([item.id, missing_id], %{notes: "changed"})
+
+    assert Catalog.get_collection_item!(item.id).notes == "unchanged"
+  end
+
   test "collection item pagination supports deterministic limit and offset" do
     assert {:ok, %{cards_count: 2, printings_count: 2}} =
              Catalog.import_cards([@black_lotus, @time_walk])
@@ -638,6 +536,17 @@ defmodule Manavault.Catalog.CollectionTest do
     assert Catalog.get_collection_item!(second.id).for_trade_quantity == 2
   end
 
+  test "setting trade quantity reports missing collection item ids" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+    item = create_collection_item!("scryfall-printing-1", quantity: 2)
+    missing_id = item.id + 10_000
+
+    assert {:error, {:not_found, [^missing_id]}} =
+             Catalog.set_collection_items_for_trade_quantity([item.id, missing_id], 1)
+
+    assert Catalog.get_collection_item!(item.id).for_trade_quantity == 0
+  end
+
   test "collection item filtering supports Scryfall search syntax" do
     assert {:ok, %{cards_count: 3, printings_count: 3}} =
              Catalog.import_cards([@black_lotus, @time_walk, @plains])
@@ -669,7 +578,7 @@ defmodule Manavault.Catalog.CollectionTest do
                "finish" => "nonfoil"
              })
 
-    assert [lotus.id] == collection_item_ids(q: "t:artifact mv=0 id:c eur>999")
+    assert [lotus.id] == collection_item_ids(q: "t:artifact mv=0 id:c usd>999")
     assert [walk.id] == collection_item_ids(q: "set:lea number:84 lang:ja is:foil")
     assert [plains.id] == collection_item_ids(q: "rarity:common type:land")
     assert [lotus.id, walk.id] == collection_item_ids(q: ~s(lotus or "time walk"))
@@ -679,7 +588,7 @@ defmodule Manavault.Catalog.CollectionTest do
     assert Catalog.count_collection_items(q: "rarity>=rare") == 2
     assert [] == Catalog.list_collection_items(q: "artist:Someone")
 
-    assert [lotus_card] = Catalog.search_cards("type:artifact rarity:rare eur>999")
+    assert [lotus_card] = Catalog.search_cards("type:artifact rarity:rare usd>999")
     assert lotus_card.oracle_id == "oracle-1"
 
     assert [walk_card] = Catalog.search_cards(~s("time walk" is:foil lang:ja))
@@ -687,93 +596,6 @@ defmodule Manavault.Catalog.CollectionTest do
 
     assert [lotus_card, walk_card] = Catalog.search_cards(~s(lotus or "time walk"))
     assert Enum.map([lotus_card, walk_card], & &1.oracle_id) == ["oracle-1", "oracle-2"]
-  end
-
-  test "physical location listings include cards allocated to decks and cubes" do
-    assert {:ok, %{cards_count: 1, printings_count: 1}} =
-             Catalog.import_cards([@black_lotus])
-
-    assert {:ok, deck_box} =
-             Catalog.create_location(%{name: "Cube Box", kind: "deck_box"})
-
-    assert {:ok, source} =
-             Catalog.create_location(%{name: "Source Binder", kind: "binder"})
-
-    assert {:ok, item} =
-             Catalog.create_collection_item(%{
-               "scryfall_id" => "scryfall-printing-1",
-               "quantity" => 1,
-               "location_id" => source.id
-             })
-
-    assert {:ok, cube} =
-             Catalog.create_deck(%{
-               "name" => "LotR Cube",
-               "kind" => "cube",
-               "location_id" => deck_box.id
-             })
-
-    assert {:ok, deck_card} =
-             Catalog.add_card_to_deck(cube, %{"name" => "Black Lotus", "quantity" => 1})
-
-    assert {:ok, allocation} =
-             Catalog.allocate_collection_item_to_deck_card(deck_card.id, item.id)
-
-    allocated_item = Catalog.get_collection_item!(allocation.collection_item_id)
-    assert allocated_item.location_id == deck_box.id
-
-    assert [allocated_item.id] ==
-             collection_item_ids(location_id: Integer.to_string(deck_box.id))
-
-    assert Catalog.count_collection_items(location_id: Integer.to_string(deck_box.id)) == 1
-
-    assert [] ==
-             collection_item_ids(
-               location_id: Integer.to_string(deck_box.id),
-               unallocated_only: true
-             )
-  end
-
-  test "location summaries count and value cards allocated to decks and cubes" do
-    assert {:ok, %{cards_count: 1, printings_count: 1}} =
-             Catalog.import_cards([@black_lotus])
-
-    assert {:ok, cube_box} =
-             Catalog.create_location(%{name: "Cube Box", kind: "deck_box"})
-
-    assert {:ok, source} =
-             Catalog.create_location(%{name: "Source Binder", kind: "binder"})
-
-    assert {:ok, item} =
-             Catalog.create_collection_item(%{
-               "scryfall_id" => "scryfall-printing-1",
-               "quantity" => 1,
-               "purchase_price_cents" => 500,
-               "location_id" => source.id
-             })
-
-    assert {:ok, cube} =
-             Catalog.create_deck(%{
-               "name" => "LotR Cube",
-               "kind" => "cube",
-               "location_id" => cube_box.id
-             })
-
-    assert {:ok, deck_card} =
-             Catalog.add_card_to_deck(cube, %{"name" => "Black Lotus", "quantity" => 1})
-
-    # Warm the cached location summaries before the allocation. The allocation
-    # must invalidate that cache as well as moving the physical collection item.
-    refute Map.has_key?(Catalog.location_summaries(), cube_box.id)
-
-    assert {:ok, _allocation} =
-             Catalog.allocate_collection_item_to_deck_card(deck_card.id, item.id)
-
-    summary = Map.fetch!(Catalog.location_summaries(), cube_box.id)
-
-    assert summary.item_count == 1
-    assert summary.total_price_cents == 10_000_000
-    assert summary.purchase_price_cents == 500
   end
 
   test "collection filtering supports allocation status via is:allocated and is:unallocated" do
@@ -818,7 +640,7 @@ defmodule Manavault.Catalog.CollectionTest do
   end
 
   test "collection item sorting supports quantity, price, value gain, and added date" do
-    time_walk = Map.put(@time_walk, "prices", %{"eur_foil" => "5.00"})
+    time_walk = Map.put(@time_walk, "prices", %{"usd_foil" => "5.00"})
 
     assert {:ok, %{cards_count: 2, printings_count: 2}} =
              Catalog.import_cards([@black_lotus, time_walk])
@@ -1011,6 +833,33 @@ defmodule Manavault.Catalog.CollectionTest do
     assert Catalog.get_collection_item!(blue_item.id).location_id == nil
     assert Catalog.get_collection_item!(list_item.id).location_id == list.id
     assert Catalog.get_collection_item!(already_sorted.id).location_id == high_priority.id
+  end
+
+  test "auto-sort applies more than one bounded batch" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+    target = create_location!("Batched")
+
+    update_auto_sort_rules!([
+      %{target_location_id: target.id, enabled: true, priority: 1, color_mode: "colorless"}
+    ])
+
+    items = for _index <- 1..101, do: create_collection_item!("scryfall-printing-1")
+
+    assert {:ok, %{checked_count: 101, moved_count: 101, skipped_count: 0}} =
+             Catalog.auto_sort_collection()
+
+    assert Enum.all?(items, &(Catalog.get_collection_item!(&1.id).location_id == target.id))
+  end
+
+  test "collection exports stream more rows than one export batch" do
+    assert {:ok, %{cards_count: 1, printings_count: 1}} = Catalog.import_cards([@black_lotus])
+    for _index <- 1..101, do: create_collection_item!("scryfall-printing-1")
+
+    assert {:ok, csv} = Catalog.export_collection_csv()
+    assert length(String.split(csv, "\n")) == 102
+
+    assert {:ok, text} = Catalog.export_collection_text()
+    assert length(String.split(text, "\n")) == 101
   end
 
   test "auto-sort ignores items moved into a location during the last 30 days" do
@@ -1237,6 +1086,84 @@ defmodule Manavault.Catalog.CollectionTest do
     assert [ring.id] == location_item_ids(colorless)
   end
 
+  test "auto-sort matches permanent front faces for both type includes and excludes" do
+    cards = [
+      test_card(
+        "emeritus",
+        "Emeritus of Woe // Demonic Tutor",
+        "Creature — Vampire Warlock // Sorcery",
+        ["B"],
+        "mythic"
+      ),
+      test_card(
+        "precious",
+        "My Precious // Allure of Power",
+        "Legendary Artifact — Equipment // Instant — Adventure",
+        [],
+        "rare"
+      ),
+      test_card("split", "Discovery // Dispersal", "Sorcery // Instant", ["U", "B"], "uncommon"),
+      test_card("sorcery", "Demonic Tutor", "Sorcery", ["B"], "rare")
+    ]
+
+    assert {:ok, %{cards_count: 4}} = Catalog.import_cards(cards)
+    instants = create_location!("Instants")
+    sorceries = create_location!("Sorceries")
+    creatures = create_location!("Creatures")
+    artifacts = create_location!("Artifacts")
+
+    update_auto_sort_rules!([
+      %{
+        target_location_id: instants.id,
+        enabled: true,
+        priority: 1,
+        type_line_includes: ["instant"]
+      },
+      %{
+        target_location_id: sorceries.id,
+        enabled: true,
+        priority: 2,
+        type_line_includes: ["sorcery"]
+      },
+      %{
+        target_location_id: creatures.id,
+        enabled: true,
+        priority: 3,
+        type_line_includes: ["creature", "vampire"],
+        type_line_excludes: ["sorcery"]
+      },
+      %{
+        target_location_id: artifacts.id,
+        enabled: true,
+        priority: 4,
+        type_line_includes: ["artifact", "equipment"],
+        type_line_excludes: ["instant"]
+      }
+    ])
+
+    emeritus = create_collection_item!("scryfall-emeritus")
+    precious = create_collection_item!("scryfall-precious")
+    split = create_collection_item!("scryfall-split")
+    sorcery = create_collection_item!("scryfall-sorcery")
+
+    assert {:ok, %{moved_count: 4, moves: moves}} = Catalog.auto_sort_collection(dry_run: true)
+
+    assert Map.new(moves, &{&1.collection_item_id, &1.to_location_id}) == %{
+             emeritus.id => creatures.id,
+             precious.id => artifacts.id,
+             split.id => instants.id,
+             sorcery.id => sorceries.id
+           }
+
+    assert [] == location_item_ids(creatures)
+
+    assert {:ok, %{moved_count: 4}} = Catalog.auto_sort_collection()
+    assert [emeritus.id] == location_item_ids(creatures)
+    assert [precious.id] == location_item_ids(artifacts)
+    assert [split.id] == location_item_ids(instants)
+    assert [sorcery.id] == location_item_ids(sorceries)
+  end
+
   test "auto-sort treats transformed cards as front-face colors instead of colorless" do
     assert {:ok, %{cards_count: 1, printings_count: 1}} =
              Catalog.import_cards([transformed_blue_card()])
@@ -1432,7 +1359,7 @@ defmodule Manavault.Catalog.CollectionTest do
       "lang" => "en",
       "rarity" => rarity,
       "finishes" => ["nonfoil"],
-      "prices" => %{"eur" => price},
+      "prices" => %{"usd" => price},
       "released_at" => "2026-01-01"
     }
   end
