@@ -309,6 +309,10 @@ export const UpdatePricingSettingsDocument = graphql(`
       pricingSettings {
         source
         sources
+        currency
+        usdPerEur
+        fxRateDate
+        fxSource
         vendors {
           vendor
           priceCount
@@ -325,6 +329,10 @@ export const SyncVendorPricesDocument = graphql(`
       pricingSettings {
         source
         sources
+        currency
+        usdPerEur
+        fxRateDate
+        fxSource
         vendors {
           vendor
           priceCount
