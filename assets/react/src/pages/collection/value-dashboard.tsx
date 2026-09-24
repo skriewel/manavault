@@ -468,7 +468,9 @@ function PurchaseBasisQuickEdit({
             <p className="mt-0.5 truncate text-xs text-base-content/60">{cardName}</p>
           </div>
           <label className="block space-y-1.5">
-            <span className="text-xs font-bold text-base-content/70">Purchase price per card (EUR)</span>
+            <span className="text-xs font-bold text-base-content/70">
+              Purchase price per card (EUR)
+            </span>
             <Input
               autoFocus
               className="h-9 min-h-9 font-mono"
