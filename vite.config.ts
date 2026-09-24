@@ -13,7 +13,12 @@ const phoenixSocketProxy = { ...phoenixProxy, ws: true }
 export default defineConfig({
   base: viteBase,
   fmt: {
-    ignorePatterns: [".backlog/**", "assets/react/src/gql/**", "assets/react/src/routeTree.gen.ts"],
+    ignorePatterns: [
+      ".backlog/**",
+      "aube-lock.yaml",
+      "assets/react/src/gql/**",
+      "assets/react/src/routeTree.gen.ts",
+    ],
     semi: false,
   },
   lint: {
@@ -63,6 +68,7 @@ export default defineConfig({
       "/sw.js": phoenixProxy,
       "/.well-known": phoenixProxy,
       "/assets/css": phoenixProxy,
+      "/shell": phoenixProxy,
       "/fonts": phoenixProxy,
       "/images": phoenixProxy,
       "/screenshots": phoenixProxy,

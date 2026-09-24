@@ -42,12 +42,20 @@ filter and sort across the full collection, track purchase price versus current
 value, and export filtered CSV/TXT lists. Collection state is preserved while you
 move between locations and cards, so back navigation returns to the same view.
 
+Auto-sort type filters and deck type grouping use a permanent's front-face type,
+not its adventure, prepared spell, or back face. Split spells retain both types.
+
 ### Build and maintain decks
 
 Create decks, import/export decklists, manage commander/main/side/maybe zones,
 choose preferred printings and finishes, group cards by theme or category, tag
 decks, check format legality, and inspect mana curve, mana production, and token
 creation summaries.
+
+Use **Pick a deck** for a random suggestion. To keep a deck out of random picks
+without archiving it, open **Edit**, turn off **Included for play**, and save.
+New and existing decks are included by default; archived decks remain excluded.
+Turning the switch back on restores eligibility without changing play history.
 
 ### Allocate owned cards to decks
 
@@ -95,11 +103,24 @@ docker run --rm \
 Then visit <http://localhost:4000>. For anything exposed beyond localhost, enable
 built-in auth and follow the self-hosting guide.
 
+For an HTTPS deployment behind a reverse proxy, set
+`MANAVAULT_SECURE_COOKIES=true` and `MANAVAULT_TRUST_PROXY_HEADERS=true`. The
+latter keeps login rate limiting separate per client instead of treating the
+proxy as one client; enable it only when a proxy you control sets the forwarded
+IP header. `MANAVAULT_FORWARDED_IP_HEADER` selects that header (default
+`x-forwarded-for`), and `MANAVAULT_SESSION_MAX_AGE_DAYS` controls the session
+lifetime (default `180`). If an owner is permanently locked out, clear one
+client with `mix manavault.auth.unban CLIENT_ID` or every client with
+`mix manavault.auth.unban --all`; the self-hosting guide includes container
+release commands.
+
 ## Documentation
 
 - [Feature reference](docs/features.md) - concepts and product-area behavior.
 - [Self-hosting](docs/self-hosting.md) - Docker, data layout, auth, environment
   variables, backups, and restores.
+- [Personal API](docs/api.md) - create read-only API keys and list decks for
+  integrations such as The Gathering.
 - [Development](docs/development.md) - local setup, tests, and native shell dev
   commands.
 - [Android builds](docs/android.md) - official APK behavior, Share/Open with

@@ -408,6 +408,42 @@ defmodule Manavault.PricingTest do
     end
   end
 
+  describe "Price.parse_cents/1" do
+    test "parses German thousands separators without decimal cents" do
+      assert Price.parse_cents("1.234") == 123_400
+      assert Price.parse_cents("12.345") == 1_234_500
+      assert Price.parse_cents("1.234,50") == 123_450
+    end
+  end
+
+  describe "cached exchange rate" do
+    test "uses the pricing store rate for repeated USD conversions" do
+      settings = Pricing.settings()
+
+      assert {:ok, _settings} =
+               settings
+               |> Settings.exchange_rate_changeset(%{
+                 usd_per_eur: 1.25,
+                 fx_rate_date: ~D[2026-09-01]
+               })
+               |> Repo.update()
+
+      start_supervised!(Store)
+      assert Pricing.usd_cents_to_eur(1_250) == 1_000
+
+      assert {:ok, _settings} =
+               Pricing.settings()
+               |> Settings.exchange_rate_changeset(%{
+                 usd_per_eur: 2.0,
+                 fx_rate_date: ~D[2026-09-02]
+               })
+               |> Repo.update()
+
+      # The hot path reads the rate already cached in ETS until the store is refreshed.
+      assert Pricing.usd_cents_to_eur(1_250) == 1_000
+    end
+  end
+
   describe "settings" do
     test "defaults to scryfall and validates sources" do
       assert Pricing.settings().source == "scryfall"
