@@ -7,6 +7,7 @@ export const CollectionItemFieldsFragment = graphql(`
     condition
     language
     finish
+    isProxy
     notes
     priceText
     purchasePriceCents
