@@ -225,6 +225,7 @@ export function DeckDetailHeader({
   const [questionOpen, setQuestionOpen] = useState(false)
   const [analyzeDeck, analysisMutation] = useMutation(AnalyzeDeckDocument)
   const hasAnalysis = Boolean(deck.aiAnalysis?.trim())
+  const isCube = deck.kind === "cube"
 
   function analyze() {
     const toastId = `deck-analysis-${deck.id}`
@@ -264,18 +265,25 @@ export function DeckDetailHeader({
           imageUrl={deck.coverImageUrl}
           fallback={<Layers className="h-12 w-12" />}
           interactive={false}
-          typeLine={<Badge>{titleize(deck.format)}</Badge>}
+          typeLine={<Badge>{isCube ? "Cube" : titleize(deck.format)}</Badge>}
           countLine={`${compactNumber(deck.cardCount || 0)} cards`}
           detailLine={
             <div className="flex flex-wrap items-center gap-2 text-base leading-none">
               <Badge tone={deck.status === "active" ? "success" : "neutral"}>
                 {titleize(deck.status)}
               </Badge>
-              <Badge tone={deckLegalityTone(deck.legality)}>
-                {deckLegalityLabel(deck.legality)}
-              </Badge>
-              <DeckBracketBadge deck={deck} />
-              <DeckSaltBadge saltSum={saltSum} />
+              {deck.location ? <Badge>{deck.location.name}</Badge> : null}
+              {!isCube ? (
+                <>
+                  <Badge tone={deckLegalityTone(deck.legality)}>
+                    {deckLegalityLabel(deck.legality)}
+                  </Badge>
+                  <DeckBracketBadge deck={deck} />
+                  <DeckSaltBadge saltSum={saltSum} />
+                </>
+              ) : deck.status === "archived" ? (
+                <Badge tone="neutral">Allocations retained</Badge>
+              ) : null}
               <DeckPriceChip
                 price={deckPrice}
                 onClick={shareMode ? onShareBuylist : onMissingCards}
@@ -284,11 +292,15 @@ export function DeckDetailHeader({
             </div>
           }
           nameLine={
-            <DeckNameWithCommanderIdentity colors={deck.commanderColorIdentity} name={deck.name} />
+            <DeckNameWithCommanderIdentity
+              colors={isCube ? [] : deck.commanderColorIdentity}
+              name={deck.name}
+            />
           }
           actionSlot={
             <ShareModeHidden shareMode={shareMode}>
               <SummaryActionMenu
+                entityKind={isCube ? "cube" : "deck"}
                 analyzeLabel={
                   analysisMutation.loading
                     ? "Analyzing..."
@@ -298,18 +310,18 @@ export function DeckDetailHeader({
                 }
                 analyzePending={analysisMutation.loading}
                 label={`${deck.name} actions`}
-                onAnalyze={analyze}
-                onCombos={onCombos}
-                onCompare={onCompareDeck}
+                onAnalyze={isCube ? undefined : analyze}
+                onCombos={isCube ? undefined : onCombos}
+                onCompare={isCube ? undefined : onCompareDeck}
                 onDisassemble={canEdit ? onDisassemble : undefined}
-                onEdhrec={canEdit && deck.format === "commander" ? onOpenEdhrec : undefined}
+                onEdhrec={!isCube && canEdit && deck.format === "commander" ? onOpenEdhrec : undefined}
                 onRecommander={
-                  canEdit && deck.format === "commander" ? onOpenRecommander : undefined
+                  !isCube && canEdit && deck.format === "commander" ? onOpenRecommander : undefined
                 }
                 onEdit={onEditDeck}
                 onExport={onExportDeck}
                 onImport={canEdit ? onImportDeck : undefined}
-                onMissing={canEdit && hasBuylistWork ? onMissingCards : undefined}
+                onMissing={!isCube && canEdit && hasBuylistWork ? onMissingCards : undefined}
                 onShare={onShareDeck}
               />
             </ShareModeHidden>
