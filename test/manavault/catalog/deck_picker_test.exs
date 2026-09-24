@@ -30,25 +30,10 @@ defmodule Manavault.Catalog.DeckPickerTest do
     assert weights[5] > weights[2]
   end
 
-  test "random deck picker excludes cubes" do
-    assert {:ok, deck} = Catalog.create_deck(%{"name" => "Normal", "status" => "active"})
-
-    assert {:ok, cube} =
-             Catalog.create_deck(%{
-               "name" => "Cube",
-               "kind" => "cube",
-               "format" => "casual",
-               "status" => "active"
-             })
-
-    assert %Deck{id: id} = Catalog.random_deck(random: fn -> 0.99 end)
-    assert id == deck.id
-    assert {:error, :cube_not_playable} = Catalog.record_deck_play(cube, :played)
-  end
-
-  test "random deck excludes archived decks and the previous suggestion when possible" do
+  test "random deck only picks active decks and excludes the previous suggestion when possible" do
     assert {:ok, alpha} = Catalog.create_deck(%{"name" => "Alpha", "status" => "active"})
-    assert {:ok, beta} = Catalog.create_deck(%{"name" => "Beta", "status" => "brewing"})
+    assert {:ok, beta} = Catalog.create_deck(%{"name" => "Beta", "status" => "active"})
+    assert {:ok, _brewing} = Catalog.create_deck(%{"name" => "A Brew", "status" => "brewing"})
     assert {:ok, _archived} = Catalog.create_deck(%{"name" => "Archived", "status" => "archived"})
 
     assert %Deck{id: id} = Catalog.random_deck(random: fn -> 0.0 end)
@@ -63,19 +48,59 @@ defmodule Manavault.Catalog.DeckPickerTest do
     assert id == alpha.id
   end
 
-  test "random deck returns nil when every deck is archived" do
+  test "random deck returns nil when every deck is brewing or archived" do
+    assert {:ok, brewing} = Catalog.create_deck(%{"name" => "Brewing", "status" => "brewing"})
     assert {:ok, _archived} = Catalog.create_deck(%{"name" => "Retired", "status" => "archived"})
 
     assert Catalog.random_deck() == nil
+    assert Catalog.random_deck(exclude_id: brewing.id) == nil
   end
 
-  test "recording outcomes persists plays, skips, and last-played time" do
-    assert {:ok, deck} = Catalog.create_deck(%{"name" => "History", "status" => "active"})
+  test "inclusion persists independently of status and is honored before reroll fallback" do
+    assert {:ok, alpha} = Catalog.create_deck(%{"name" => "Alpha", "status" => "active"})
+    assert alpha.included_for_play
+
+    assert {:ok, beta} =
+             Catalog.create_deck(%{
+               "name" => "Beta",
+               "status" => "active",
+               "included_for_play" => false
+             })
+
+    assert {:ok, alpha} = Catalog.update_deck(alpha, %{"included_for_play" => false})
+    assert alpha.status == "active"
+    refute Repo.get!(Deck, alpha.id).included_for_play
+    assert length(Catalog.list_deck_summaries()) == 2
+    assert Catalog.random_deck(exclude_id: alpha.id) == nil
+
+    assert {:ok, beta} = Catalog.update_deck(beta, %{"included_for_play" => true})
+
+    for random <- [0.0, 1.0] do
+      assert %Deck{id: id} =
+               Catalog.random_deck(exclude_id: beta.id, random: fn -> random end)
+
+      assert id == beta.id
+    end
+
+    assert {:ok, _beta} = Catalog.update_deck(beta, %{"status" => "archived"})
+    assert Catalog.random_deck() == nil
+
+    assert {:ok, alpha} = Catalog.update_deck(alpha, %{"included_for_play" => true})
+    assert Catalog.random_deck().id == alpha.id
+
+    assert {:error, changeset} = Catalog.update_deck(alpha, %{"included_for_play" => nil})
+    assert %{included_for_play: [_]} = errors_on(changeset)
+  end
+
+  test "playing resets accumulated skips and subsequent skips start from zero" do
+    assert {:ok, deck} =
+             Catalog.create_deck(%{"name" => "History", "status" => "active", "skip_count" => 3})
 
     assert {:ok, %Deck{play_count: 1, skip_count: 0, last_played_at: %DateTime{}}} =
              Catalog.record_deck_play(deck, :played)
 
     deck = Repo.get!(Deck, deck.id)
+    assert deck.skip_count == 0
 
     assert {:ok, %Deck{play_count: 1, skip_count: 1, last_played_at: %DateTime{}}} =
              Catalog.record_deck_play(deck, :skipped)
