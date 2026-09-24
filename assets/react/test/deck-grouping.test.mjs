@@ -26,6 +26,33 @@ function deckCard(id, overrides = {}) {
   }
 }
 
+test("type grouping uses permanent front faces without changing split spells", () => {
+  const cards = [
+    deckCard("emeritus", { card: { typeLine: "Creature — Vampire Warlock // Sorcery" } }),
+    deckCard("precious", {
+      quantity: 2,
+      card: { typeLine: "Legendary Artifact — Equipment // Instant — Adventure" },
+    }),
+    deckCard("virtue", { card: { typeLine: "Enchantment // Instant — Adventure" } }),
+    deckCard("split", { card: { typeLine: "Sorcery // Instant" } }),
+    deckCard("artifact-creature", { card: { typeLine: "Artifact Creature — Golem" } }),
+    deckCard("commander", { zone: "commander", card: { typeLine: "Creature // Sorcery" } }),
+  ]
+
+  const groups = groupDeckCards(cards, "type")
+  assert.deepEqual(
+    Object.fromEntries(groups.map((group) => [group.key, group.cards.map((card) => card.id)])),
+    {
+      commander: ["commander"],
+      creature: ["artifact-creature", "emeritus"],
+      instant: ["split"],
+      artifact: ["precious"],
+      enchantment: ["virtue"],
+    },
+  )
+  assert.equal(groups.find((group) => group.key === "artifact").quantity, 2)
+})
+
 test("theme grouping is the first option and uses the first non-empty theme", () => {
   assert.deepEqual(DECK_GROUP_OPTIONS.slice(0, 2), [
     { label: "Theme", value: "theme" },
@@ -335,6 +362,11 @@ test("price grouping buckets cards by per-card price", () => {
       deckCard("twenty-five", { priceCents: 2500 }),
       deckCard("fifty", { priceCents: 5000 }),
       deckCard("unknown", { priceCents: null }),
+      deckCard("proxy", {
+        quantity: 2,
+        priceCents: 7500,
+        allocationStatus: { proxyAllocated: 1, state: "allocated" },
+      }),
     ],
     "price",
   )
@@ -342,13 +374,14 @@ test("price grouping buckets cards by per-card price", () => {
   assert.deepEqual(
     groups.map((group) => ({ key: group.key, label: group.label, quantity: group.quantity })),
     [
-      { key: "under-1", label: "<€1", quantity: 3 },
-      { key: "1-3", label: "€1–€3", quantity: 1 },
-      { key: "3-5", label: "€3–€5", quantity: 1 },
-      { key: "5-10", label: "€5–€10", quantity: 1 },
-      { key: "10-25", label: "€10–€25", quantity: 1 },
-      { key: "25-50", label: "€25–€50", quantity: 1 },
-      { key: "50-plus", label: "€50+", quantity: 1 },
+      { key: "under-1", label: "<$1", quantity: 3 },
+      { key: "1-3", label: "$1–$3", quantity: 1 },
+      { key: "3-5", label: "$3–$5", quantity: 1 },
+      { key: "5-10", label: "$5–$10", quantity: 1 },
+      { key: "10-25", label: "$10–$25", quantity: 1 },
+      { key: "25-50", label: "$25–$50", quantity: 1 },
+      { key: "50-plus", label: "$50+", quantity: 1 },
+      { key: "proxies", label: "Proxies", quantity: 2 },
       { key: "unpriced", label: "Unpriced", quantity: 1 },
     ],
   )
