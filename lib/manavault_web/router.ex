@@ -90,6 +90,7 @@ defmodule ManavaultWeb.Router do
     pipe_through [:api, :personal_api]
 
     get "/decks", DeckController, :index
+    get "/stats", StatsController, :show
   end
 
   scope "/" do
