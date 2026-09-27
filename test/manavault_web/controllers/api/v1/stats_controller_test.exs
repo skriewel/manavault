@@ -4,6 +4,19 @@ defmodule ManavaultWeb.Api.V1.StatsControllerTest do
 
   alias Manavault.Auth.ApiKeys
   alias Manavault.Catalog
+  alias Manavault.PublicShareRequestLimiter
+
+  setup do
+    previous_rate_limit = Application.get_env(:manavault, :public_share_rate_limit)
+    PublicShareRequestLimiter.reset()
+
+    on_exit(fn ->
+      Application.put_env(:manavault, :public_share_rate_limit, previous_rate_limit)
+      PublicShareRequestLimiter.reset()
+    end)
+
+    :ok
+  end
 
   test "requires a personal API key", %{conn: conn} do
     assert %{"error" => %{"code" => "unauthorized"}} =
