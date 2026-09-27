@@ -61,6 +61,30 @@ or `C` for a colorless commander. It is `null` when a deck has no commander.
 An unshared deck has `"publicly_shared": false` and
 `"public_share_url": null`.
 
+## Instance Stats
+
+The same personal API key can read compact instance statistics, suitable for dashboards such as Homepage:
+
+```http
+GET /api/v1/stats HTTP/1.1
+Host: manavault.example.com
+Authorization: Bearer mvk_your_full_personal_api_key
+Accept: application/json
+```
+
+Example response:
+
+```json
+{
+  "collection_cards": 8421,
+  "collection_printings": 3950,
+  "decks": 17,
+  "collection_value_eur": 2843.12
+}
+```
+
+`collection_cards` is the total owned quantity, while `collection_printings` is the number of distinct Scryfall printings in the collection. The collection value uses ManaVault's current EUR price calculation.
+
 ## Errors and Limits
 
 Missing, malformed, unknown, or revoked keys return `401 Unauthorized`:
